@@ -6,6 +6,8 @@ import { Shirt, Calendar, Palette, PlusCircle, Settings, LogOut, Menu, X } from 
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import ClothingGrid from '@/components/ClothingGrid';
+import { WeatherWidget } from '@/components/WeatherWidget';
+import { CalendarWidget } from '@/components/CalendarWidget';
 
 const Dashboard = () => {
   const { user, logout } = useAuth();
@@ -144,58 +146,71 @@ const Dashboard = () => {
           </p>
         </header>
         
+        {/* Weather widget - always visible */}
+        <div className="mb-6">
+          <WeatherWidget />
+        </div>
+        
         {/* Tab content */}
-        <div>
-          {activeTab === 'wardrobe' && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.3 }}
-            >
-              <ClothingGrid />
-            </motion.div>
-          )}
-          
-          {activeTab === 'outfits' && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.3 }}
-              className="bg-white rounded-xl p-6 shadow-sm"
-            >
-              <Link to="/outfit-builder" className="inline-block">
-                <Button size="lg" className="gap-2">
-                  <PlusCircle size={18} />
-                  Create New Outfit
-                </Button>
-              </Link>
-              
-              <div className="mt-8 text-center py-12">
-                <p className="text-gray-500">
-                  You haven't created any outfits yet.
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Main content area - takes 2/3 of the space on medium screens and above */}
+          <div className="md:col-span-2">
+            {activeTab === 'wardrobe' && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.3 }}
+              >
+                <ClothingGrid />
+              </motion.div>
+            )}
+            
+            {activeTab === 'outfits' && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.3 }}
+                className="bg-white rounded-xl p-6 shadow-sm"
+              >
+                <Link to="/outfit-builder" className="inline-block">
+                  <Button size="lg" className="gap-2">
+                    <PlusCircle size={18} />
+                    Create New Outfit
+                  </Button>
+                </Link>
+                
+                <div className="mt-8 text-center py-12">
+                  <p className="text-gray-500">
+                    You haven't created any outfits yet.
+                  </p>
+                  <p className="text-sm text-gray-400 mt-1">
+                    Create your first outfit to get started.
+                  </p>
+                </div>
+              </motion.div>
+            )}
+            
+            {activeTab === 'calendar' && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.3 }}
+                className="bg-white rounded-xl p-6 shadow-sm"
+              >
+                <h2 className="text-lg font-medium mb-4">Calendar View</h2>
+                <p className="text-gray-500 mb-6">
+                  Plan your outfits by date and get weather-based recommendations.
                 </p>
-                <p className="text-sm text-gray-400 mt-1">
-                  Create your first outfit to get started.
-                </p>
-              </div>
-            </motion.div>
-          )}
+                
+                <CalendarWidget />
+              </motion.div>
+            )}
+          </div>
           
-          {activeTab === 'calendar' && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.3 }}
-              className="bg-white rounded-xl p-6 shadow-sm text-center py-12"
-            >
-              <p className="text-gray-500">
-                Calendar feature coming soon.
-              </p>
-              <p className="text-sm text-gray-400 mt-1">
-                Plan your outfits by date and get weather-based recommendations.
-              </p>
-            </motion.div>
-          )}
+          {/* Side panel - takes 1/3 of the space on medium screens and above */}
+          <div className="hidden md:block">
+            <CalendarWidget />
+          </div>
         </div>
       </main>
     </div>
