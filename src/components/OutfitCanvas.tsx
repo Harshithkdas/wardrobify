@@ -4,6 +4,8 @@ import { motion } from 'framer-motion';
 import { Save, Trash2, Download, Info, Image, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from '@/hooks/useAuth';
 
 interface CanvasItem {
   id: string;
@@ -17,10 +19,20 @@ interface CanvasItem {
 }
 
 const OutfitCanvas = () => {
+  const { user } = useAuth();
   const [items, setItems] = useState<CanvasItem[]>([]);
   const [activeItemId, setActiveItemId] = useState<string | null>(null);
   const [canvasName, setCanvasName] = useState('Untitled Outfit');
   const canvasRef = useRef<HTMLDivElement>(null);
+  
+  // Sample clothing items - in a real app, these would come from the user's wardrobe
+  const clothingItems = [
+    { id: 'sample-1', imageUrl: 'https://images.unsplash.com/photo-1576566588028-4147f3842f27?q=80&w=300&auto=format' },
+    { id: 'sample-2', imageUrl: 'https://images.unsplash.com/photo-1618354691373-d851c5c3a990?q=80&w=300&auto=format' },
+    { id: 'sample-3', imageUrl: 'https://images.unsplash.com/photo-1591369822096-ffd140ec948f?q=80&w=300&auto=format' },
+    { id: 'sample-4', imageUrl: 'https://images.unsplash.com/photo-1588359348347-9bc6cbbb689e?q=80&w=300&auto=format' },
+    { id: 'sample-5', imageUrl: 'https://images.unsplash.com/photo-1562157873-818bc0726f68?q=80&w=300&auto=format' },
+  ];
   
   const handleDragStart = (id: string) => {
     setActiveItemId(id);
@@ -66,14 +78,22 @@ const OutfitCanvas = () => {
     toast.success('Item removed from outfit');
   };
   
-  const handleAddItem = () => {
-    // This would normally get data from your wardrobe selection
-    // For demo, we'll add a sample item
+  const handleAddItem = (imageUrl: string = '') => {
+    // If no image URL is provided, use a default one
+    const itemImageUrl = imageUrl || 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1480&q=80';
+    
+    // Calculate a random position within the canvas boundaries
+    const canvasWidth = canvasRef.current?.clientWidth || 500;
+    const canvasHeight = canvasRef.current?.clientHeight || 400;
+    
+    const randomX = Math.random() * (canvasWidth - 200) + 50;
+    const randomY = Math.random() * (canvasHeight - 200) + 50;
+    
     const newItem: CanvasItem = {
-      id: `item-${Date.now()}`,
-      imageUrl: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1480&q=80',
-      x: 100,
-      y: 100,
+      id: `item-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      imageUrl: itemImageUrl,
+      x: randomX,
+      y: randomY,
       width: 150,
       height: 150,
       zIndex: items.length,
@@ -84,7 +104,23 @@ const OutfitCanvas = () => {
     toast.success('Item added to outfit');
   };
   
-  const handleSaveOutfit = () => {
+  const handleSampleItemClick = (imageUrl: string) => {
+    handleAddItem(imageUrl);
+  };
+  
+  const handleSaveOutfit = async () => {
+    if (!user) {
+      toast.error('You must be logged in to save outfits');
+      return;
+    }
+    
+    // In a real app, you would save this to the database
+    console.log('Saving outfit:', {
+      name: canvasName,
+      items: items,
+      userId: user.id
+    });
+    
     toast.success('Outfit saved successfully!');
   };
   
@@ -132,8 +168,8 @@ const OutfitCanvas = () => {
             <p className="text-gray-500 text-sm max-w-xs mb-4">
               Add clothing items from your wardrobe to start creating an outfit
             </p>
-            <Button onClick={handleAddItem} size="sm">
-              Add Item
+            <Button onClick={() => handleAddItem()} size="sm">
+              Add Sample Item
             </Button>
           </div>
         ) : (
@@ -202,21 +238,21 @@ const OutfitCanvas = () => {
         <h3 className="text-sm font-medium mb-2">Add to Canvas</h3>
         <div className="flex items-center gap-2 overflow-x-auto pb-2 hide-scrollbar">
           <button 
-            onClick={handleAddItem}
+            onClick={() => handleAddItem()}
             className="flex-shrink-0 w-16 h-16 border border-gray-200 rounded-md hover:border-gray-300 flex items-center justify-center"
           >
             <Image size={20} className="text-gray-500" />
           </button>
           
           {/* Sample wardrobe items */}
-          {[1, 2, 3, 4, 5].map((i) => (
+          {clothingItems.map((item) => (
             <button 
-              key={i}
-              onClick={handleAddItem}
+              key={item.id}
+              onClick={() => handleSampleItemClick(item.imageUrl)}
               className="flex-shrink-0 w-16 h-16 border border-gray-200 rounded-md overflow-hidden group relative"
             >
               <img 
-                src={`https://source.unsplash.com/random/150x150?clothing&${i}`} 
+                src={item.imageUrl} 
                 alt="Clothing item" 
                 className="w-full h-full object-cover"
               />
