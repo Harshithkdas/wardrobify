@@ -6,12 +6,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Eye, EyeOff, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { toast } from 'sonner';
+import { useAuth } from '@/hooks/useAuth';
 
 const AuthForm = () => {
   const [searchParams] = useSearchParams();
   const authType = searchParams.get('type') || 'login';
   const navigate = useNavigate();
+  
+  const { login, register, isLoading } = useAuth();
   
   const [formData, setFormData] = useState({
     email: '',
@@ -20,7 +22,6 @@ const AuthForm = () => {
   });
   
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -29,25 +30,18 @@ const AuthForm = () => {
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
     
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // Success message
-      toast.success(
-        authType === 'login' 
-          ? 'Successfully logged in!' 
-          : 'Account created successfully!'
-      );
-      
-      // Redirect to dashboard
-      navigate('/dashboard');
+      if (authType === 'login') {
+        await login(formData.email, formData.password);
+        navigate('/dashboard');
+      } else {
+        await register(formData.name, formData.email, formData.password);
+        // Stay on registration page as they might need to verify email
+      }
     } catch (error) {
-      toast.error('Authentication failed. Please try again.');
-    } finally {
-      setIsLoading(false);
+      // Error is handled in the auth hook
+      console.error('Authentication error:', error);
     }
   };
   
