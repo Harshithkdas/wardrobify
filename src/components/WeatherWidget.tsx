@@ -16,6 +16,12 @@ export const WeatherWidget = () => {
   const [isLocating, setIsLocating] = useState(false);
 
   useEffect(() => {
+    // Try to get user's location on component mount
+    detectLocation();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
     // Mock weather data fetch
     const fetchWeather = () => {
       setLoading(true);
@@ -79,7 +85,7 @@ export const WeatherWidget = () => {
         toast.error('Unable to retrieve your location');
         setIsLocating(false);
       },
-      { timeout: 10000 }
+      { timeout: 10000, maximumAge: 60000 }
     );
   };
 

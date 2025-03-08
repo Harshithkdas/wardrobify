@@ -1,67 +1,70 @@
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import ClothingItem from './ClothingItem';
 import { Search, Filter, PlusCircle, Upload, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 
-// Sample data
-const dummyClothingItems = [
-  {
-    id: '1',
-    name: 'White Cotton T-Shirt',
-    category: 'Tops',
-    color: 'White',
-    imageUrl: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1480&q=80'
-  },
-  {
-    id: '2',
-    name: 'Blue Jeans',
-    category: 'Bottoms',
-    color: 'Blue',
-    imageUrl: 'https://images.unsplash.com/photo-1542272604-787c3835535d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1926&q=80'
-  },
-  {
-    id: '3',
-    name: 'Black Leather Jacket',
-    category: 'Outerwear',
-    color: 'Black',
-    imageUrl: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1935&q=80'
-  },
-  {
-    id: '4',
-    name: 'Navy Blue Dress Shirt',
-    category: 'Tops',
-    color: 'Navy',
-    imageUrl: 'https://images.unsplash.com/photo-1593030761757-71fae45fa0e7?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1480&q=80'
-  },
-  {
-    id: '5',
-    name: 'Khaki Chinos',
-    category: 'Bottoms',
-    color: 'Khaki',
-    imageUrl: 'https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1497&q=80'
-  },
-  {
-    id: '6',
-    name: 'Red Sweater',
-    category: 'Tops',
-    color: 'Red',
-    imageUrl: 'https://images.unsplash.com/photo-1580331451432-64ab679aa9fd?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1374&q=80'
-  },
-];
+interface ClothingItemType {
+  id: string;
+  name: string;
+  category: string;
+  color: string;
+  imageUrl: string;
+}
 
 const ClothingGrid = () => {
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
-  const [items, setItems] = useState(dummyClothingItems);
+  const [items, setItems] = useState<ClothingItemType[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [newItemName, setNewItemName] = useState('');
   const [newItemCategory, setNewItemCategory] = useState('Tops');
   const [newItemColor, setNewItemColor] = useState('');
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Fetch clothing items when component mounts or user changes
+  useEffect(() => {
+    const fetchClothingItems = async () => {
+      if (!user) return;
+      
+      setIsLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('clothing_items')
+          .select('id, name, category, color, image')
+          .eq('user_id', user.id);
+        
+        if (error) {
+          throw error;
+        }
+        
+        // Map data to the expected format
+        const formattedItems = data.map(item => ({
+          id: item.id,
+          name: item.name,
+          category: item.category,
+          color: item.color,
+          imageUrl: item.image
+        }));
+        
+        setItems(formattedItems);
+      } catch (error: any) {
+        console.error('Error fetching clothing items:', error);
+        toast.error('Failed to load your wardrobe');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchClothingItems();
+  }, [user]);
   
   const handleSelect = (id: string) => {
     toast.info(`Item ${id} selected`);
@@ -73,9 +76,26 @@ const ClothingGrid = () => {
     // Handle edit logic
   };
   
-  const handleDelete = (id: string) => {
-    toast.success(`Item ${id} removed from wardrobe`);
-    setItems(prevItems => prevItems.filter(item => item.id !== id));
+  const handleDelete = async (id: string) => {
+    if (!user) return;
+    
+    try {
+      const { error } = await supabase
+        .from('clothing_items')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', user.id);
+      
+      if (error) {
+        throw error;
+      }
+      
+      setItems(prevItems => prevItems.filter(item => item.id !== id));
+      toast.success('Item removed from wardrobe');
+    } catch (error: any) {
+      console.error('Error deleting item:', error);
+      toast.error('Failed to remove item');
+    }
   };
   
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -94,8 +114,13 @@ const ClothingGrid = () => {
     }
   };
   
-  const handleAddItemSubmit = (e: React.FormEvent) => {
+  const handleAddItemSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!user) {
+      toast.error('You must be logged in to add items');
+      return;
+    }
     
     if (!newItemName) {
       toast.error('Please enter a name for the item');
@@ -107,26 +132,57 @@ const ClothingGrid = () => {
       return;
     }
     
-    // Create a new item
-    const newItem = {
-      id: `item-${Date.now()}`,
-      name: newItemName,
-      category: newItemCategory,
-      color: newItemColor || 'Unknown',
-      imageUrl: selectedImage || 'https://images.unsplash.com/photo-1603252109303-2751441dd157?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1480&q=80'
-    };
-    
-    // Add to items
-    setItems(prevItems => [...prevItems, newItem]);
-    
-    // Reset form
-    setNewItemName('');
-    setNewItemCategory('Tops');
-    setNewItemColor('');
-    setSelectedImage(null);
-    setShowAddModal(false);
-    
-    toast.success('New clothing item added to wardrobe');
+    try {
+      // Default image if none selected
+      const imageUrl = selectedImage || 'https://images.unsplash.com/photo-1603252109303-2751441dd157?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1480&q=80';
+      
+      // Insert item into Supabase
+      const { data, error } = await supabase
+        .from('clothing_items')
+        .insert({
+          name: newItemName,
+          category: newItemCategory,
+          color: newItemColor || 'Unknown',
+          image: imageUrl,
+          material: 'Unknown', // Required field in the schema
+          season: ['All'], // Required field in the schema
+          occasion: ['Casual'], // Required field in the schema
+          user_id: user.id
+        })
+        .select('id, name, category, color, image');
+      
+      if (error) {
+        throw error;
+      }
+      
+      // Format the returned item and add to state
+      if (data && data[0]) {
+        const newItem = {
+          id: data[0].id,
+          name: data[0].name,
+          category: data[0].category,
+          color: data[0].color,
+          imageUrl: data[0].image
+        };
+        
+        setItems(prevItems => [...prevItems, newItem]);
+        toast.success('New clothing item added to wardrobe');
+      }
+      
+      // Reset form
+      setNewItemName('');
+      setNewItemCategory('Tops');
+      setNewItemColor('');
+      setSelectedImage(null);
+      setShowAddModal(false);
+      
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    } catch (error: any) {
+      console.error('Error adding item:', error);
+      toast.error('Failed to add item to wardrobe');
+    }
   };
   
   const handleAddNew = () => {
@@ -166,14 +222,26 @@ const ClothingGrid = () => {
         </div>
       </div>
       
-      {filteredItems.length === 0 ? (
+      {isLoading ? (
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+          {[1, 2, 3, 4, 5, 6].map((index) => (
+            <div key={index} className="animate-pulse">
+              <div className="aspect-square bg-gray-200 rounded-xl"></div>
+              <div className="h-4 bg-gray-200 rounded mt-2 w-3/4"></div>
+              <div className="h-3 bg-gray-200 rounded mt-1 w-1/2"></div>
+            </div>
+          ))}
+        </div>
+      ) : filteredItems.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 text-center">
           <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
             <Search size={24} className="text-gray-400" />
           </div>
           <h3 className="font-medium text-gray-900 mb-1">No items found</h3>
           <p className="text-gray-500 text-sm max-w-xs">
-            We couldn't find any clothing items matching your search.
+            {searchQuery ? 
+              "We couldn't find any clothing items matching your search." : 
+              "Your wardrobe is empty. Start adding your clothes!"}
           </p>
         </div>
       ) : (
