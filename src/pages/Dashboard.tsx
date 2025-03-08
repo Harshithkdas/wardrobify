@@ -2,12 +2,13 @@
 import { useState, useEffect } from 'react';
 import { Navigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Shirt, Calendar, Palette, PlusCircle, Settings, LogOut, Menu, X } from 'lucide-react';
+import { Shirt, Calendar, Palette, PlusCircle, Settings, LogOut, Menu, X, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import ClothingGrid from '@/components/ClothingGrid';
 import { WeatherWidget } from '@/components/WeatherWidget';
 import { CalendarWidget } from '@/components/CalendarWidget';
+import { OutfitAdvisor } from '@/components/OutfitAdvisor';
 
 const Dashboard = () => {
   const { user, logout } = useAuth();
@@ -99,6 +100,18 @@ const Dashboard = () => {
             <Calendar size={20} />
             <span>Calendar</span>
           </button>
+          
+          <button
+            onClick={() => setActiveTab('advisor')}
+            className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+              activeTab === 'advisor' 
+                ? 'bg-blue-50 text-blue-700' 
+                : 'hover:bg-gray-100 text-gray-700'
+            }`}
+          >
+            <MessageSquare size={20} />
+            <span>Outfit Advisor</span>
+          </button>
         </nav>
         
         <div className="p-4 border-t border-gray-100">
@@ -138,23 +151,27 @@ const Dashboard = () => {
             {activeTab === 'wardrobe' && 'My Wardrobe'}
             {activeTab === 'outfits' && 'Outfit Builder'}
             {activeTab === 'calendar' && 'Calendar'}
+            {activeTab === 'advisor' && 'Outfit Advisor'}
           </h1>
           <p className="text-gray-600">
             {activeTab === 'wardrobe' && 'Manage and organize your clothing items'}
             {activeTab === 'outfits' && 'Create and save outfit combinations'}
             {activeTab === 'calendar' && 'Plan your outfits by date'}
+            {activeTab === 'advisor' && 'Get AI-powered outfit recommendations'}
           </p>
         </header>
         
-        {/* Weather widget - always visible */}
-        <div className="mb-6">
-          <WeatherWidget />
-        </div>
+        {/* Weather widget - always visible except in advisor tab */}
+        {activeTab !== 'advisor' && (
+          <div className="mb-6">
+            <WeatherWidget />
+          </div>
+        )}
         
         {/* Tab content */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Main content area - takes 2/3 of the space on medium screens and above */}
-          <div className="md:col-span-2">
+          <div className={activeTab === 'advisor' ? "md:col-span-3" : "md:col-span-2"}>
             {activeTab === 'wardrobe' && (
               <motion.div
                 initial={{ opacity: 0 }}
@@ -195,7 +212,7 @@ const Dashboard = () => {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.3 }}
-                className="bg-white rounded-xl p-6 shadow-sm"
+                className="bg-white rounded-xl p-6 shadow-sm h-full"
               >
                 <h2 className="text-lg font-medium mb-4">Calendar View</h2>
                 <p className="text-gray-500 mb-6">
@@ -205,12 +222,25 @@ const Dashboard = () => {
                 <CalendarWidget />
               </motion.div>
             )}
+            
+            {activeTab === 'advisor' && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.3 }}
+                className="bg-white rounded-xl shadow-sm h-[600px]"
+              >
+                <OutfitAdvisor />
+              </motion.div>
+            )}
           </div>
           
           {/* Side panel - takes 1/3 of the space on medium screens and above */}
-          <div className="hidden md:block">
-            <CalendarWidget />
-          </div>
+          {activeTab !== 'advisor' && (
+            <div className="hidden md:block">
+              <CalendarWidget />
+            </div>
+          )}
         </div>
       </main>
     </div>
