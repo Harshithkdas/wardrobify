@@ -11,17 +11,18 @@ interface WeatherData {
 export const WeatherWidget = () => {
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [location, setLocation] = useState('New York, NY'); // Default location
 
   useEffect(() => {
     // Mock weather data fetch
     const fetchWeather = () => {
       setLoading(true);
-      // In a real app, you would fetch from a weather API
+      // In a real app, you would fetch from a weather API using the location
       setTimeout(() => {
         const mockWeather: WeatherData = {
           temperature: Math.floor(Math.random() * 30) + 5, // 5-35°C
           condition: ['sunny', 'cloudy', 'rainy', 'snowy', 'windy'][Math.floor(Math.random() * 5)] as any,
-          location: 'Your Location'
+          location: location
         };
         setWeather(mockWeather);
         setLoading(false);
@@ -29,7 +30,12 @@ export const WeatherWidget = () => {
     };
 
     fetchWeather();
-  }, []);
+    
+    // Refresh weather data every 30 minutes
+    const interval = setInterval(fetchWeather, 30 * 60 * 1000);
+    
+    return () => clearInterval(interval);
+  }, [location]);
 
   const getWeatherIcon = (condition: string) => {
     switch (condition) {

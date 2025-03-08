@@ -2,10 +2,12 @@
 import * as React from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
 
 export const CalendarWidget = () => {
   const [date, setDate] = React.useState<Date | undefined>(new Date());
   const [events, setEvents] = React.useState<{[key: string]: string}>({});
+  const [newEventName, setNewEventName] = React.useState<string>("");
   
   // Function to format date as string key
   const formatDateKey = (date: Date): string => {
@@ -29,7 +31,25 @@ export const CalendarWidget = () => {
   }, []);
   
   // Get current date's event
-  const currentDateEvent = date ? events[formatDateKey(date)] : undefined;
+  const currentDateKey = date ? formatDateKey(date) : "";
+  const currentDateEvent = date ? events[currentDateKey] : undefined;
+  
+  // Handle adding a new event
+  const handleAddEvent = () => {
+    if (date && newEventName.trim()) {
+      setEvents(prev => ({
+        ...prev,
+        [formatDateKey(date)]: newEventName.trim()
+      }));
+      setNewEventName("");
+    }
+  };
+  
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleAddEvent();
+    }
+  };
   
   return (
     <Card>
@@ -58,7 +78,27 @@ export const CalendarWidget = () => {
             {currentDateEvent ? (
               <p className="text-sm mt-1">Planned outfit: {currentDateEvent}</p>
             ) : (
-              <p className="text-sm text-gray-500 mt-1">No outfit planned for this day</p>
+              <div className="mt-2">
+                <Label htmlFor="event-name" className="text-sm text-gray-500">Add an outfit for this day:</Label>
+                <div className="flex mt-1">
+                  <input
+                    id="event-name"
+                    type="text"
+                    value={newEventName}
+                    onChange={(e) => setNewEventName(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    className="flex-1 px-3 py-1 text-sm border rounded-l-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    placeholder="Enter outfit description"
+                  />
+                  <button 
+                    onClick={handleAddEvent}
+                    disabled={!newEventName.trim()}
+                    className="bg-blue-500 text-white px-3 py-1 rounded-r-md text-sm disabled:bg-blue-300"
+                  >
+                    Add
+                  </button>
+                </div>
+              </div>
             )}
           </div>
         )}

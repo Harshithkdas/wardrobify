@@ -73,8 +73,18 @@ const ClothingGrid = () => {
   };
   
   const handleAddNew = () => {
-    toast.info('Add new clothing item');
-    // Handle add new logic
+    // Create a new mock clothing item
+    const newItem = {
+      id: `item-${Date.now()}`,
+      name: 'New Clothing Item',
+      category: 'Tops',
+      color: 'Blue',
+      imageUrl: 'https://images.unsplash.com/photo-1603252109303-2751441dd157?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1480&q=80'
+    };
+    
+    // Add the new item to the state
+    setItems(prevItems => [...prevItems, newItem]);
+    toast.success('New clothing item added');
   };
   
   // Filter items based on search query
