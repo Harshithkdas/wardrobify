@@ -1,13 +1,13 @@
-
 import { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import ClothingItem from './ClothingItem';
-import { Search, Filter, PlusCircle, Upload, X } from 'lucide-react';
+import { Search, Filter, PlusCircle, Upload, X, Shirt } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { sampleMensClothingItems } from '@/utils/sampleClothingItems';
 
 interface ClothingItemType {
   id: string;
@@ -27,9 +27,9 @@ const ClothingGrid = () => {
   const [newItemColor, setNewItemColor] = useState('');
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [addingItems, setAddingItems] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
-  // Fetch clothing items when component mounts or user changes
   useEffect(() => {
     const fetchClothingItems = async () => {
       if (!user) return;
@@ -45,7 +45,6 @@ const ClothingGrid = () => {
           throw error;
         }
         
-        // Map data to the expected format
         const formattedItems = data.map(item => ({
           id: item.id,
           name: item.name,
@@ -68,12 +67,10 @@ const ClothingGrid = () => {
   
   const handleSelect = (id: string) => {
     toast.info(`Item ${id} selected`);
-    // Handle selection logic
   };
   
   const handleEdit = (id: string) => {
     toast.info(`Editing item ${id}`);
-    // Handle edit logic
   };
   
   const handleDelete = async (id: string) => {
@@ -133,10 +130,8 @@ const ClothingGrid = () => {
     }
     
     try {
-      // Default image if none selected
       const imageUrl = selectedImage || 'https://images.unsplash.com/photo-1603252109303-2751441dd157?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1480&q=80';
       
-      // Insert item into Supabase
       const { data, error } = await supabase
         .from('clothing_items')
         .insert({
@@ -144,9 +139,9 @@ const ClothingGrid = () => {
           category: newItemCategory,
           color: newItemColor || 'Unknown',
           image: imageUrl,
-          material: 'Unknown', // Required field in the schema
-          season: ['All'], // Required field in the schema
-          occasion: ['Casual'], // Required field in the schema
+          material: 'Unknown',
+          season: ['All'],
+          occasion: ['Casual'],
           user_id: user.id
         })
         .select('id, name, category, color, image');
@@ -155,7 +150,6 @@ const ClothingGrid = () => {
         throw error;
       }
       
-      // Format the returned item and add to state
       if (data && data[0]) {
         const newItem = {
           id: data[0].id,
@@ -169,7 +163,6 @@ const ClothingGrid = () => {
         toast.success('New clothing item added to wardrobe');
       }
       
-      // Reset form
       setNewItemName('');
       setNewItemCategory('Tops');
       setNewItemColor('');
@@ -189,7 +182,59 @@ const ClothingGrid = () => {
     setShowAddModal(true);
   };
   
-  // Filter items based on search query
+  const handleAddSampleItems = async () => {
+    if (!user) {
+      toast.error('You must be logged in to add items');
+      return;
+    }
+
+    setAddingItems(true);
+    try {
+      let addedCount = 0;
+      
+      for (const item of sampleMensClothingItems) {
+        const { data, error } = await supabase
+          .from('clothing_items')
+          .insert({
+            name: item.name,
+            category: item.category,
+            color: item.color,
+            image: item.image,
+            material: item.material,
+            season: item.season,
+            occasion: item.occasion,
+            user_id: user.id
+          })
+          .select('id, name, category, color, image');
+        
+        if (error) {
+          console.error('Error adding sample item:', error);
+          continue;
+        }
+        
+        if (data && data[0]) {
+          const newItem = {
+            id: data[0].id,
+            name: data[0].name,
+            category: data[0].category,
+            color: data[0].color,
+            imageUrl: data[0].image
+          };
+          
+          setItems(prevItems => [...prevItems, newItem]);
+          addedCount++;
+        }
+      }
+      
+      toast.success(`Added ${addedCount} men's clothing items to your wardrobe`);
+    } catch (error: any) {
+      console.error('Error adding sample items:', error);
+      toast.error('Failed to add sample items to wardrobe');
+    } finally {
+      setAddingItems(false);
+    }
+  };
+  
   const filteredItems = items.filter(item => 
     item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     item.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -218,6 +263,15 @@ const ClothingGrid = () => {
           <Button size="sm" onClick={handleAddNew} className="gap-1">
             <PlusCircle size={16} />
             Add Item
+          </Button>
+          <Button 
+            size="sm" 
+            onClick={handleAddSampleItems} 
+            disabled={addingItems}
+            className="gap-1"
+          >
+            <Shirt size={16} />
+            {addingItems ? 'Adding...' : 'Add Sample Items'}
           </Button>
         </div>
       </div>
@@ -267,7 +321,6 @@ const ClothingGrid = () => {
         </motion.div>
       )}
       
-      {/* Add Item Modal */}
       {showAddModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <motion.div 
@@ -288,7 +341,6 @@ const ClothingGrid = () => {
             
             <form onSubmit={handleAddItemSubmit}>
               <div className="space-y-4">
-                {/* Image Upload */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Image
@@ -335,7 +387,6 @@ const ClothingGrid = () => {
                   </div>
                 </div>
                 
-                {/* Name */}
                 <div>
                   <label htmlFor="item-name" className="block text-sm font-medium text-gray-700 mb-1">
                     Name
@@ -349,7 +400,6 @@ const ClothingGrid = () => {
                   />
                 </div>
                 
-                {/* Category */}
                 <div>
                   <label htmlFor="item-category" className="block text-sm font-medium text-gray-700 mb-1">
                     Category
@@ -369,7 +419,6 @@ const ClothingGrid = () => {
                   </select>
                 </div>
                 
-                {/* Color */}
                 <div>
                   <label htmlFor="item-color" className="block text-sm font-medium text-gray-700 mb-1">
                     Color
