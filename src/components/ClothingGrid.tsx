@@ -1,8 +1,8 @@
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import ClothingItem from './ClothingItem';
-import { Search, Filter, PlusCircle } from 'lucide-react';
+import { Search, Filter, PlusCircle, Upload, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -56,6 +56,12 @@ const dummyClothingItems = [
 const ClothingGrid = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [items, setItems] = useState(dummyClothingItems);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newItemName, setNewItemName] = useState('');
+  const [newItemCategory, setNewItemCategory] = useState('Tops');
+  const [newItemColor, setNewItemColor] = useState('');
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const handleSelect = (id: string) => {
     toast.info(`Item ${id} selected`);
@@ -72,19 +78,59 @@ const ClothingGrid = () => {
     setItems(prevItems => prevItems.filter(item => item.id !== id));
   };
   
-  const handleAddNew = () => {
-    // Create a new mock clothing item
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('Image too large. Maximum size is 5MB.');
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setSelectedImage(event.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+  
+  const handleAddItemSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!newItemName) {
+      toast.error('Please enter a name for the item');
+      return;
+    }
+    
+    if (!selectedImage && !newItemColor) {
+      toast.error('Please select an image or enter a color');
+      return;
+    }
+    
+    // Create a new item
     const newItem = {
       id: `item-${Date.now()}`,
-      name: 'New Clothing Item',
-      category: 'Tops',
-      color: 'Blue',
-      imageUrl: 'https://images.unsplash.com/photo-1603252109303-2751441dd157?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1480&q=80'
+      name: newItemName,
+      category: newItemCategory,
+      color: newItemColor || 'Unknown',
+      imageUrl: selectedImage || 'https://images.unsplash.com/photo-1603252109303-2751441dd157?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1480&q=80'
     };
     
-    // Add the new item to the state
+    // Add to items
     setItems(prevItems => [...prevItems, newItem]);
-    toast.success('New clothing item added');
+    
+    // Reset form
+    setNewItemName('');
+    setNewItemCategory('Tops');
+    setNewItemColor('');
+    setSelectedImage(null);
+    setShowAddModal(false);
+    
+    toast.success('New clothing item added to wardrobe');
+  };
+  
+  const handleAddNew = () => {
+    setShowAddModal(true);
   };
   
   // Filter items based on search query
@@ -151,6 +197,139 @@ const ClothingGrid = () => {
             />
           ))}
         </motion.div>
+      )}
+      
+      {/* Add Item Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <motion.div 
+            className="bg-white rounded-lg p-6 w-full max-w-md"
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.2 }}
+          >
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold">Add New Item</h2>
+              <button 
+                onClick={() => setShowAddModal(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            
+            <form onSubmit={handleAddItemSubmit}>
+              <div className="space-y-4">
+                {/* Image Upload */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Image
+                  </label>
+                  <div 
+                    className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:bg-gray-50"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    {selectedImage ? (
+                      <div className="relative">
+                        <img 
+                          src={selectedImage} 
+                          alt="Selected" 
+                          className="mx-auto h-48 object-contain" 
+                        />
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedImage(null);
+                            if (fileInputRef.current) {
+                              fileInputRef.current.value = '';
+                            }
+                          }}
+                          className="absolute top-2 right-2 bg-white rounded-full p-1 shadow-md"
+                        >
+                          <X size={16} />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="py-4">
+                        <Upload size={24} className="mx-auto text-gray-400 mb-2" />
+                        <p className="text-sm text-gray-500">Click to upload image</p>
+                        <p className="text-xs text-gray-400 mt-1">PNG, JPG, WEBP up to 5MB</p>
+                      </div>
+                    )}
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleFileChange}
+                      accept="image/*"
+                      className="hidden"
+                    />
+                  </div>
+                </div>
+                
+                {/* Name */}
+                <div>
+                  <label htmlFor="item-name" className="block text-sm font-medium text-gray-700 mb-1">
+                    Name
+                  </label>
+                  <Input
+                    id="item-name"
+                    value={newItemName}
+                    onChange={(e) => setNewItemName(e.target.value)}
+                    placeholder="White Cotton T-Shirt"
+                    required
+                  />
+                </div>
+                
+                {/* Category */}
+                <div>
+                  <label htmlFor="item-category" className="block text-sm font-medium text-gray-700 mb-1">
+                    Category
+                  </label>
+                  <select
+                    id="item-category"
+                    value={newItemCategory}
+                    onChange={(e) => setNewItemCategory(e.target.value)}
+                    className="w-full border-gray-300 rounded-md shadow-sm px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  >
+                    <option value="Tops">Tops</option>
+                    <option value="Bottoms">Bottoms</option>
+                    <option value="Outerwear">Outerwear</option>
+                    <option value="Dresses">Dresses</option>
+                    <option value="Shoes">Shoes</option>
+                    <option value="Accessories">Accessories</option>
+                  </select>
+                </div>
+                
+                {/* Color */}
+                <div>
+                  <label htmlFor="item-color" className="block text-sm font-medium text-gray-700 mb-1">
+                    Color
+                  </label>
+                  <Input
+                    id="item-color"
+                    value={newItemColor}
+                    onChange={(e) => setNewItemColor(e.target.value)}
+                    placeholder="White"
+                  />
+                </div>
+                
+                <div className="flex justify-end gap-2 pt-2">
+                  <Button 
+                    type="button" 
+                    variant="outline"
+                    onClick={() => setShowAddModal(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="submit">
+                    Add to Wardrobe
+                  </Button>
+                </div>
+              </div>
+            </form>
+          </motion.div>
+        </div>
       )}
     </div>
   );

@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from 'react';
-import { Cloud, Sun, CloudRain, CloudSnow, Wind } from 'lucide-react';
+import { Cloud, Sun, CloudRain, CloudSnow, Wind, MapPin } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface WeatherData {
   temperature: number;
@@ -12,6 +13,7 @@ export const WeatherWidget = () => {
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState(true);
   const [location, setLocation] = useState('New York, NY'); // Default location
+  const [isLocating, setIsLocating] = useState(false);
 
   useEffect(() => {
     // Mock weather data fetch
@@ -53,6 +55,33 @@ export const WeatherWidget = () => {
         return <Cloud />;
     }
   };
+  
+  const detectLocation = () => {
+    if (!navigator.geolocation) {
+      toast.error('Geolocation is not supported by your browser');
+      return;
+    }
+    
+    setIsLocating(true);
+    
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        // In a real app, you would use a reverse geocoding service
+        // to convert coordinates to a city name
+        // For demonstration, we'll just use the coordinates
+        const newLocation = `${position.coords.latitude.toFixed(2)}, ${position.coords.longitude.toFixed(2)}`;
+        setLocation(newLocation);
+        toast.success('Location detected');
+        setIsLocating(false);
+      },
+      (error) => {
+        console.error('Error getting location:', error);
+        toast.error('Unable to retrieve your location');
+        setIsLocating(false);
+      },
+      { timeout: 10000 }
+    );
+  };
 
   if (loading) {
     return (
@@ -70,6 +99,14 @@ export const WeatherWidget = () => {
           <h3 className="text-sm font-medium text-gray-700">{weather?.location}</h3>
           <p className="text-2xl font-bold">{weather?.temperature}°C</p>
           <p className="text-sm text-gray-500 capitalize">{weather?.condition}</p>
+          <button 
+            onClick={detectLocation}
+            className="mt-2 flex items-center text-xs text-blue-500 hover:text-blue-700"
+            disabled={isLocating}
+          >
+            <MapPin size={12} className="mr-1" />
+            {isLocating ? 'Detecting...' : 'Use my location'}
+          </button>
         </div>
         <div className="text-2xl">
           {weather && getWeatherIcon(weather.condition)}
