@@ -13,16 +13,9 @@ const OutfitCanvas = () => {
   const { user } = useAuth();
   const [canvasName, setCanvasName] = useState('Untitled Outfit');
   const canvasRef = useRef<HTMLDivElement>(null);
+  const [userClothingItems, setUserClothingItems] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   
-  // Sample clothing items - in a real app, these would come from the user's wardrobe
-  const clothingItems = [
-    { id: 'sample-1', imageUrl: 'https://images.unsplash.com/photo-1576566588028-4147f3842f27?q=80&w=300&auto=format' },
-    { id: 'sample-2', imageUrl: 'https://images.unsplash.com/photo-1618354691373-d851c5c3a990?q=80&w=300&auto=format' },
-    { id: 'sample-3', imageUrl: 'https://images.unsplash.com/photo-1591369822096-ffd140ec948f?q=80&w=300&auto=format' },
-    { id: 'sample-4', imageUrl: 'https://images.unsplash.com/photo-1588359348347-9bc6cbbb689e?q=80&w=300&auto=format' },
-    { id: 'sample-5', imageUrl: 'https://images.unsplash.com/photo-1562157873-818bc0726f68?q=80&w=300&auto=format' },
-  ];
-
   // Get current canvas dimensions
   const [canvasDimensions, setCanvasDimensions] = useState({ width: 500, height: 400 });
   
@@ -34,6 +27,39 @@ const OutfitCanvas = () => {
       });
     }
   }, []);
+  
+  // Fetch user's clothing items from Supabase
+  useEffect(() => {
+    const fetchUserWardrobe = async () => {
+      if (!user) return;
+      
+      setIsLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('clothing_items')
+          .select('id, image')
+          .eq('user_id', user.id);
+        
+        if (error) {
+          throw error;
+        }
+        
+        const formattedItems = data.map(item => ({
+          id: item.id,
+          imageUrl: item.image
+        }));
+        
+        setUserClothingItems(formattedItems);
+      } catch (error) {
+        console.error('Error fetching wardrobe items:', error);
+        toast.error('Failed to load your wardrobe items');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchUserWardrobe();
+  }, [user]);
   
   // Use our custom hook for managing canvas items
   const { 
@@ -97,10 +123,18 @@ const OutfitCanvas = () => {
         )}
       </div>
       
-      <WardrobeToolbar
-        clothingItems={clothingItems}
-        onAddItem={(imageUrl) => handleAddItem(imageUrl)}
-      />
+      {isLoading ? (
+        <div className="mt-4 flex items-center gap-2 overflow-x-auto pb-2">
+          <div className="flex-shrink-0 w-16 h-16 bg-gray-200 rounded-md animate-pulse"></div>
+          <div className="flex-shrink-0 w-16 h-16 bg-gray-200 rounded-md animate-pulse"></div>
+          <div className="flex-shrink-0 w-16 h-16 bg-gray-200 rounded-md animate-pulse"></div>
+        </div>
+      ) : (
+        <WardrobeToolbar
+          clothingItems={userClothingItems}
+          onAddItem={(imageUrl) => handleAddItem(imageUrl)}
+        />
+      )}
     </div>
   );
 };
