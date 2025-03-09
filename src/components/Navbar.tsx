@@ -72,16 +72,6 @@ const Navbar = () => {
                   Features
                 </Link>
               </li>
-              <li>
-                <Link 
-                  to="/pricing" 
-                  className={`transition-all duration-200 hover:text-black ${
-                    location.pathname === '/pricing' ? 'text-black font-medium' : 'text-gray-600'
-                  }`}
-                >
-                  Pricing
-                </Link>
-              </li>
             </ul>
           </nav>
           
@@ -145,14 +135,6 @@ const Navbar = () => {
               }`}
             >
               Features
-            </Link>
-            <Link 
-              to="/pricing" 
-              className={`block py-2 ${
-                location.pathname === '/pricing' ? 'text-black font-medium' : 'text-gray-600'
-              }`}
-            >
-              Pricing
             </Link>
             
             <div className="pt-2 border-t border-gray-200">
