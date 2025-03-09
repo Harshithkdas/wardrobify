@@ -3,16 +3,17 @@ import { useState, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from '@/hooks/useAuth';
-import { useCanvasItems } from '@/hooks/useCanvasItems';
+import { useCanvasItems, CanvasItem } from '@/hooks/useCanvasItems';
 import { CanvasHeader } from './outfit-builder/CanvasHeader';
 import { EmptyCanvasState } from './outfit-builder/EmptyCanvasState';
-import { CanvasItem } from './outfit-builder/CanvasItem';
+import { CanvasItem as CanvasItemComponent } from './outfit-builder/CanvasItem';
 import { WardrobeToolbar } from './outfit-builder/WardrobeToolbar';
+import { Json } from '@/integrations/supabase/types';
 
 interface SavedOutfit {
   id: string;
   name: string;
-  items: any[];
+  items: CanvasItem[];
 }
 
 const OutfitCanvas = () => {
@@ -84,7 +85,14 @@ const OutfitCanvas = () => {
           throw error;
         }
         
-        setSavedOutfits(data);
+        // Transform the data to ensure items is properly typed
+        const typedOutfits: SavedOutfit[] = data.map(outfit => ({
+          id: outfit.id,
+          name: outfit.name,
+          items: outfit.items as unknown as CanvasItem[]
+        }));
+        
+        setSavedOutfits(typedOutfits);
       } catch (error) {
         console.error('Error fetching saved outfits:', error);
         toast.error('Failed to load your saved outfits');
@@ -125,7 +133,7 @@ const OutfitCanvas = () => {
         .insert({
           user_id: user.id,
           name: canvasName,
-          items: items
+          items: items as unknown as Json
         })
         .select('id, name, items');
       
@@ -133,8 +141,16 @@ const OutfitCanvas = () => {
         throw error;
       }
       
-      // Add the new outfit to the saved outfits list
-      setSavedOutfits(prev => [data[0], ...prev]);
+      // Add the new outfit to the saved outfits list with proper typing
+      if (data && data.length > 0) {
+        const newOutfit: SavedOutfit = {
+          id: data[0].id,
+          name: data[0].name,
+          items: data[0].items as unknown as CanvasItem[]
+        };
+        
+        setSavedOutfits(prev => [newOutfit, ...prev]);
+      }
       
       toast.success('Outfit saved successfully!');
     } catch (error) {
@@ -172,7 +188,7 @@ const OutfitCanvas = () => {
         ) : (
           // Canvas with items
           items.map((item) => (
-            <CanvasItem
+            <CanvasItemComponent
               key={item.id}
               {...item}
               isActive={activeItemId === item.id}

@@ -4,12 +4,19 @@ import { useState, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import { CanvasItem } from '@/hooks/useCanvasItems';
+
+interface SavedOutfit {
+  id: string;
+  name: string;
+  items: CanvasItem[];
+}
 
 interface WardrobeToolbarProps {
   clothingItems: Array<{ id: string; imageUrl: string }>;
   onAddItem: (imageUrl?: string) => void;
-  savedOutfits: Array<{ id: string; name: string; items: any[] }>;
-  onLoadOutfit: (outfit: { id: string; name: string; items: any[] }) => void;
+  savedOutfits: SavedOutfit[];
+  onLoadOutfit: (outfit: SavedOutfit) => void;
 }
 
 export const WardrobeToolbar = ({ 
