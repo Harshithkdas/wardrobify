@@ -91,6 +91,7 @@ export const useCanvasItems = (canvasWidth: number = 500, canvasHeight: number =
   
   return {
     items,
+    setItems,
     activeItemId,
     handleDragStart,
     handleDrag,

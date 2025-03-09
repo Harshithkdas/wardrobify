@@ -9,11 +9,18 @@ import { EmptyCanvasState } from './outfit-builder/EmptyCanvasState';
 import { CanvasItem } from './outfit-builder/CanvasItem';
 import { WardrobeToolbar } from './outfit-builder/WardrobeToolbar';
 
+interface SavedOutfit {
+  id: string;
+  name: string;
+  items: any[];
+}
+
 const OutfitCanvas = () => {
   const { user } = useAuth();
   const [canvasName, setCanvasName] = useState('Untitled Outfit');
   const canvasRef = useRef<HTMLDivElement>(null);
   const [userClothingItems, setUserClothingItems] = useState([]);
+  const [savedOutfits, setSavedOutfits] = useState<SavedOutfit[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
   // Get current canvas dimensions
@@ -61,6 +68,32 @@ const OutfitCanvas = () => {
     fetchUserWardrobe();
   }, [user]);
   
+  // Fetch saved outfits from Supabase
+  useEffect(() => {
+    const fetchSavedOutfits = async () => {
+      if (!user) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('outfits')
+          .select('id, name, items')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
+        
+        if (error) {
+          throw error;
+        }
+        
+        setSavedOutfits(data);
+      } catch (error) {
+        console.error('Error fetching saved outfits:', error);
+        toast.error('Failed to load your saved outfits');
+      }
+    };
+    
+    fetchSavedOutfits();
+  }, [user]);
+  
   // Use our custom hook for managing canvas items
   const { 
     items, 
@@ -71,7 +104,8 @@ const OutfitCanvas = () => {
     handleRotate, 
     handleRemoveItem, 
     handleAddItem, 
-    clearItems 
+    clearItems,
+    setItems
   } = useCanvasItems(canvasDimensions.width, canvasDimensions.height);
   
   const handleSaveOutfit = async () => {
@@ -80,14 +114,43 @@ const OutfitCanvas = () => {
       return;
     }
     
-    // In a real app, you would save this to the database
-    console.log('Saving outfit:', {
-      name: canvasName,
-      items: items,
-      userId: user.id
-    });
+    if (items.length === 0) {
+      toast.error('Cannot save an empty outfit');
+      return;
+    }
     
-    toast.success('Outfit saved successfully!');
+    try {
+      const { data, error } = await supabase
+        .from('outfits')
+        .insert({
+          user_id: user.id,
+          name: canvasName,
+          items: items
+        })
+        .select('id, name, items');
+      
+      if (error) {
+        throw error;
+      }
+      
+      // Add the new outfit to the saved outfits list
+      setSavedOutfits(prev => [data[0], ...prev]);
+      
+      toast.success('Outfit saved successfully!');
+    } catch (error) {
+      console.error('Error saving outfit:', error);
+      toast.error('Failed to save outfit');
+    }
+  };
+  
+  const handleLoadOutfit = (outfit: SavedOutfit) => {
+    clearItems();
+    setCanvasName(outfit.name);
+    // Need to slightly delay setting items to ensure clearItems has completed
+    setTimeout(() => {
+      setItems(outfit.items);
+      toast.success(`Loaded outfit: ${outfit.name}`);
+    }, 50);
   };
 
   return (
@@ -133,6 +196,8 @@ const OutfitCanvas = () => {
         <WardrobeToolbar
           clothingItems={userClothingItems}
           onAddItem={(imageUrl) => handleAddItem(imageUrl)}
+          savedOutfits={savedOutfits}
+          onLoadOutfit={handleLoadOutfit}
         />
       )}
     </div>
