@@ -1,6 +1,6 @@
 
 import { motion } from 'framer-motion';
-import { ChevronRight, Sparkles, Shirt, Calendar } from 'lucide-react';
+import { ChevronRight, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 
@@ -61,13 +61,11 @@ const Hero = () => {
           >
             <div className="relative">
               <div className="absolute -top-10 -left-10 p-4 glass-effect rounded-2xl shadow-sm animate-float">
-                <Shirt size={28} className="text-blue-600" />
-                <p className="mt-1 text-sm font-medium">Organize Clothing</p>
+                <p className="text-sm font-medium">Organize Clothing</p>
               </div>
               
               <div className="absolute -bottom-8 -right-6 p-4 glass-effect rounded-2xl shadow-sm animate-float" style={{ animationDelay: '1s' }}>
-                <Calendar size={28} className="text-purple-600" />
-                <p className="mt-1 text-sm font-medium">Plan Outfits</p>
+                <p className="text-sm font-medium">Plan Outfits</p>
               </div>
               
               <div className="relative glass-effect rounded-2xl overflow-hidden shadow-lg">
