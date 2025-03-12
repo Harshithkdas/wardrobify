@@ -59,26 +59,16 @@ const Hero = () => {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5, delay: 0.4 }}
           >
-            <div className="relative">
-              <div className="absolute -top-10 -left-10 p-4 glass-effect rounded-2xl shadow-sm animate-float">
-                {/* Text label removed */}
-              </div>
-              
-              <div className="absolute -bottom-8 -right-6 p-4 glass-effect rounded-2xl shadow-sm animate-float" style={{ animationDelay: '1s' }}>
-                {/* Text label removed */}
-              </div>
-              
-              <div className="relative glass-effect rounded-2xl overflow-hidden shadow-lg">
-                <img 
-                  src="https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80" 
-                  alt="Wardrobe organization" 
-                  className="w-full h-full object-cover rounded-2xl"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent flex items-end p-8">
-                  <div className="text-white">
-                    <h3 className="text-2xl font-bold mb-2">Effortless Style</h3>
-                    <p className="text-sm text-white/80">Organize, create, and plan with ease</p>
-                  </div>
+            <div className="relative glass-effect rounded-2xl overflow-hidden shadow-lg">
+              <img 
+                src="https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80" 
+                alt="Wardrobe organization" 
+                className="w-full h-full object-cover rounded-2xl"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent flex items-end p-8">
+                <div className="text-white">
+                  <h3 className="text-2xl font-bold mb-2">Effortless Style</h3>
+                  <p className="text-sm text-white/80">Organize, create, and plan with ease</p>
                 </div>
               </div>
             </div>
