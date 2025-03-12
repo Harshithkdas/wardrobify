@@ -61,11 +61,11 @@ const Hero = () => {
           >
             <div className="relative">
               <div className="absolute -top-10 -left-10 p-4 glass-effect rounded-2xl shadow-sm animate-float">
-                <p className="text-sm font-medium">Organize Clothing</p>
+                {/* Text label removed */}
               </div>
               
               <div className="absolute -bottom-8 -right-6 p-4 glass-effect rounded-2xl shadow-sm animate-float" style={{ animationDelay: '1s' }}>
-                <p className="text-sm font-medium">Plan Outfits</p>
+                {/* Text label removed */}
               </div>
               
               <div className="relative glass-effect rounded-2xl overflow-hidden shadow-lg">
