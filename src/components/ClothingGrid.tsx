@@ -15,9 +15,14 @@ interface ClothingItemType {
   category: string;
   color: string;
   imageUrl: string;
+  occasion?: string[];
 }
 
-const ClothingGrid = () => {
+interface ClothingGridProps {
+  categoryFilter: string | null;
+}
+
+const ClothingGrid = ({ categoryFilter }: ClothingGridProps) => {
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [items, setItems] = useState<ClothingItemType[]>([]);
@@ -25,6 +30,7 @@ const ClothingGrid = () => {
   const [newItemName, setNewItemName] = useState('');
   const [newItemCategory, setNewItemCategory] = useState('Tops');
   const [newItemColor, setNewItemColor] = useState('');
+  const [newItemOccasion, setNewItemOccasion] = useState<string[]>(['Casual']);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [addingItems, setAddingItems] = useState(false);
@@ -36,10 +42,17 @@ const ClothingGrid = () => {
       
       setIsLoading(true);
       try {
-        const { data, error } = await supabase
+        let query = supabase
           .from('clothing_items')
-          .select('id, name, category, color, image')
+          .select('id, name, category, color, image, occasion')
           .eq('user_id', user.id);
+        
+        // Apply category filter if provided
+        if (categoryFilter) {
+          query = query.eq('category', categoryFilter);
+        }
+        
+        const { data, error } = await query;
         
         if (error) {
           throw error;
@@ -50,7 +63,8 @@ const ClothingGrid = () => {
           name: item.name,
           category: item.category,
           color: item.color,
-          imageUrl: item.image
+          imageUrl: item.image,
+          occasion: item.occasion
         }));
         
         setItems(formattedItems);
@@ -63,7 +77,7 @@ const ClothingGrid = () => {
     };
     
     fetchClothingItems();
-  }, [user]);
+  }, [user, categoryFilter]);
   
   const handleSelect = (id: string) => {
     toast.info(`Item ${id} selected`);
@@ -141,10 +155,10 @@ const ClothingGrid = () => {
           image: imageUrl,
           material: 'Unknown',
           season: ['All'],
-          occasion: ['Casual'],
+          occasion: newItemOccasion,
           user_id: user.id
         })
-        .select('id, name, category, color, image');
+        .select('id, name, category, color, image, occasion');
       
       if (error) {
         throw error;
@@ -156,7 +170,8 @@ const ClothingGrid = () => {
           name: data[0].name,
           category: data[0].category,
           color: data[0].color,
-          imageUrl: data[0].image
+          imageUrl: data[0].image,
+          occasion: data[0].occasion
         };
         
         setItems(prevItems => [...prevItems, newItem]);
@@ -166,6 +181,7 @@ const ClothingGrid = () => {
       setNewItemName('');
       setNewItemCategory('Tops');
       setNewItemColor('');
+      setNewItemOccasion(['Casual']);
       setSelectedImage(null);
       setShowAddModal(false);
       
@@ -241,6 +257,10 @@ const ClothingGrid = () => {
     item.color.toLowerCase().includes(searchQuery.toLowerCase())
   );
   
+  const occasionOptions = [
+    'Casual', 'Formal', 'Business', 'Party', 'Sports', 'Beach', 'Winter', 'Summer'
+  ];
+  
   return (
     <div className="w-full">
       <div className="flex flex-col md:flex-row gap-4 justify-between mb-6">
@@ -313,6 +333,7 @@ const ClothingGrid = () => {
               category={item.category}
               color={item.color}
               imageUrl={item.imageUrl}
+              occasion={item.occasion}
               onSelect={handleSelect}
               onEdit={handleEdit}
               onDelete={handleDelete}
@@ -429,6 +450,31 @@ const ClothingGrid = () => {
                     onChange={(e) => setNewItemColor(e.target.value)}
                     placeholder="White"
                   />
+                </div>
+                
+                <div>
+                  <label htmlFor="item-occasion" className="block text-sm font-medium text-gray-700 mb-1">
+                    Occasions
+                  </label>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {occasionOptions.map(occasion => (
+                      <label key={occasion} className="flex items-center gap-1.5">
+                        <input
+                          type="checkbox"
+                          checked={newItemOccasion.includes(occasion)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setNewItemOccasion(prev => [...prev, occasion]);
+                            } else {
+                              setNewItemOccasion(prev => prev.filter(o => o !== occasion));
+                            }
+                          }}
+                          className="rounded text-blue-500"
+                        />
+                        <span className="text-sm">{occasion}</span>
+                      </label>
+                    ))}
+                  </div>
                 </div>
                 
                 <div className="flex justify-end gap-2 pt-2">

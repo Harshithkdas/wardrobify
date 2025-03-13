@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Edit2, Trash2, Info } from 'lucide-react';
+import { Edit2, Trash2, Info, Tag } from 'lucide-react';
 
 interface ClothingItemProps {
   id: string;
@@ -9,6 +9,7 @@ interface ClothingItemProps {
   category: string;
   color: string;
   imageUrl: string;
+  occasion?: string[];
   onSelect: (id: string) => void;
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
@@ -20,6 +21,7 @@ const ClothingItem = ({
   category,
   color,
   imageUrl,
+  occasion = [],
   onSelect,
   onEdit,
   onDelete
@@ -71,6 +73,24 @@ const ClothingItem = ({
           />
           <span className="text-xs text-gray-500">{color}</span>
         </div>
+        
+        {/* Occasion tags */}
+        {occasion && occasion.length > 0 && (
+          <div className="flex flex-wrap gap-1 mt-2">
+            {occasion.slice(0, 2).map(occ => (
+              <span 
+                key={occ}
+                className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs bg-blue-100 text-blue-800"
+              >
+                <Tag size={10} className="mr-1" />
+                {occ}
+              </span>
+            ))}
+            {occasion.length > 2 && (
+              <span className="text-xs text-gray-500">+{occasion.length - 2} more</span>
+            )}
+          </div>
+        )}
       </div>
       
       {/* Action buttons (visible on hover) */}

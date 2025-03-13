@@ -1,31 +1,79 @@
 
 import * as React from "react";
-import { useState } from "react";
-import { SendHorizonal, Bot } from "lucide-react";
+import { useState, useEffect } from "react";
+import { SendHorizonal, Bot, Tag } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 
 type Message = {
   id: string;
   content: string;
   isUser: boolean;
+  outfitSuggestion?: {
+    occasion: string;
+    items: OutfitItem[];
+  };
+};
+
+type OutfitItem = {
+  id: string;
+  imageUrl: string;
+  name: string;
+  category: string;
+};
+
+type ClothingItem = {
+  id: string;
+  name: string;
+  category: string;
+  color: string;
+  image: string;
+  occasion: string[];
 };
 
 const initialMessages: Message[] = [
   {
     id: "1",
-    content: "Hello! I'm your outfit advisor. I can suggest outfit combinations based on your wardrobe, occasions, or weather. What would you like help with today?",
+    content: "Hello! I'm your outfit advisor. I can suggest outfit combinations based on your wardrobe and occasions. Try asking me for outfit suggestions for specific occasions like 'What should I wear to a business meeting?' or 'Suggest an outfit for a beach day'.",
     isUser: false,
   },
 ];
 
 export const OutfitAdvisor = () => {
+  const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [userWardrobe, setUserWardrobe] = useState<ClothingItem[]>([]);
   
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
+  
+  // Load user's wardrobe items
+  useEffect(() => {
+    if (user) {
+      const fetchUserWardrobe = async () => {
+        try {
+          const { data, error } = await supabase
+            .from('clothing_items')
+            .select('*')
+            .eq('user_id', user.id);
+          
+          if (error) {
+            throw error;
+          }
+          
+          setUserWardrobe(data || []);
+        } catch (error) {
+          console.error('Error fetching wardrobe:', error);
+        }
+      };
+      
+      fetchUserWardrobe();
+    }
+  }, [user]);
   
   React.useEffect(() => {
     scrollToBottom();
@@ -33,6 +81,103 @@ export const OutfitAdvisor = () => {
   
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  // Function to identify occasion from user input
+  const identifyOccasion = (input: string): string | null => {
+    const occasions = [
+      'casual', 'formal', 'business', 'party', 'wedding', 'date', 
+      'interview', 'work', 'office', 'beach', 'vacation', 'dinner',
+      'sports', 'gym', 'workout', 'hiking', 'travel', 'winter', 'summer'
+    ];
+    
+    const inputLower = input.toLowerCase();
+    
+    for (const occasion of occasions) {
+      if (inputLower.includes(occasion)) {
+        return occasion;
+      }
+    }
+    
+    return null;
+  };
+  
+  // Function to find items suitable for an occasion
+  const findItemsForOccasion = (occasion: string): OutfitItem[] => {
+    if (!userWardrobe || userWardrobe.length === 0) {
+      return [];
+    }
+    
+    // Map occasion to related tags
+    const occasionMap: Record<string, string[]> = {
+      'casual': ['Casual', 'Summer', 'All'],
+      'formal': ['Formal', 'Business', 'All'],
+      'business': ['Business', 'Formal', 'All'],
+      'party': ['Party', 'Casual', 'All'],
+      'wedding': ['Formal', 'Party', 'All'],
+      'date': ['Casual', 'Party', 'All'],
+      'interview': ['Business', 'Formal', 'All'],
+      'work': ['Business', 'Casual', 'All'],
+      'office': ['Business', 'Formal', 'All'],
+      'beach': ['Beach', 'Summer', 'Casual', 'All'],
+      'vacation': ['Beach', 'Summer', 'Casual', 'All'],
+      'dinner': ['Casual', 'Formal', 'All'],
+      'sports': ['Sports', 'Casual', 'All'],
+      'gym': ['Sports', 'Casual', 'All'],
+      'workout': ['Sports', 'Casual', 'All'],
+      'hiking': ['Sports', 'Casual', 'All'],
+      'travel': ['Casual', 'All'],
+      'winter': ['Winter', 'All'],
+      'summer': ['Summer', 'Beach', 'All']
+    };
+    
+    const relevantTags = occasionMap[occasion] || ['Casual', 'All'];
+    
+    // Find items with matching occasion tags
+    const matchingItems: Record<string, OutfitItem[]> = {
+      'Tops': [],
+      'Bottoms': [],
+      'Outerwear': [],
+      'Shoes': [],
+      'Accessories': []
+    };
+    
+    userWardrobe.forEach(item => {
+      const hasRelevantTag = item.occasion.some(tag => 
+        relevantTags.includes(tag)
+      );
+      
+      if (hasRelevantTag) {
+        const category = item.category;
+        if (matchingItems[category]) {
+          matchingItems[category].push({
+            id: item.id,
+            imageUrl: item.image,
+            name: item.name,
+            category: item.category
+          });
+        }
+      }
+    });
+    
+    // If wardrobe is empty or no matching items, return empty array
+    if (Object.values(matchingItems).every(items => items.length === 0)) {
+      return [];
+    }
+    
+    // Create an outfit with one item from each category if available
+    const outfit: OutfitItem[] = [];
+    
+    // Try to select one item from each category
+    Object.entries(matchingItems).forEach(([category, items]) => {
+      if (items.length > 0) {
+        // Select random item from category
+        const randomIndex = Math.floor(Math.random() * items.length);
+        outfit.push(items[randomIndex]);
+      }
+    });
+    
+    return outfit;
   };
 
   const handleSendMessage = () => {
@@ -49,23 +194,54 @@ export const OutfitAdvisor = () => {
     setInput("");
     setIsLoading(true);
     
-    // Simulate AI response (in a real app, this would call an API)
+    // Process the user's request
     setTimeout(() => {
-      const responses = [
-        "I suggest trying a casual outfit with your blue jeans and that new white shirt you added recently. Perfect for a day out!",
-        "For the current weather, I'd recommend layering with your light jacket and a scarf.",
-        "How about creating a business casual look with your grey pants and navy blazer?",
-        "Your recent additions would pair well together - the black pants with that patterned top would make a great outfit.",
-        "Based on the season, your floral dress with a light cardigan would be a perfect choice!"
-      ];
+      const occasion = identifyOccasion(input);
+      let aiResponse: Message;
       
-      const aiMessage: Message = {
-        id: Date.now().toString(),
-        content: responses[Math.floor(Math.random() * responses.length)],
-        isUser: false,
-      };
+      if (occasion) {
+        const outfitItems = findItemsForOccasion(occasion);
+        
+        if (outfitItems.length > 0) {
+          // Create categorized response
+          const tops = outfitItems.filter(item => item.category === 'Tops');
+          const bottoms = outfitItems.filter(item => item.category === 'Bottoms');
+          const outerwear = outfitItems.filter(item => item.category === 'Outerwear');
+          const shoes = outfitItems.filter(item => item.category === 'Shoes');
+          
+          let responseText = `For a ${occasion} occasion, I suggest this outfit from your wardrobe:`;
+          
+          aiResponse = {
+            id: Date.now().toString(),
+            content: responseText,
+            isUser: false,
+            outfitSuggestion: {
+              occasion,
+              items: outfitItems
+            }
+          };
+        } else {
+          aiResponse = {
+            id: Date.now().toString(),
+            content: `I couldn't find suitable items for a ${occasion} occasion in your wardrobe. Try adding more items with occasion tags, or ask about a different occasion.`,
+            isUser: false,
+          };
+        }
+      } else if (input.toLowerCase().includes('help') || input.toLowerCase().includes('how')) {
+        aiResponse = {
+          id: Date.now().toString(),
+          content: "You can ask me for outfit suggestions for specific occasions like 'What should I wear to a business meeting?', 'Suggest a casual outfit', or 'Beach day outfit ideas'. I'll look at your wardrobe and recommend items that would work well together.",
+          isUser: false,
+        };
+      } else {
+        aiResponse = {
+          id: Date.now().toString(),
+          content: "I'm not sure what occasion you're looking for. Try asking for outfit suggestions for specific occasions like 'business', 'casual', 'party', 'beach', etc.",
+          isUser: false,
+        };
+      }
       
-      setMessages((prev) => [...prev, aiMessage]);
+      setMessages((prev) => [...prev, aiResponse]);
       setIsLoading(false);
     }, 1000);
   };
@@ -104,6 +280,31 @@ export const OutfitAdvisor = () => {
                 )}
               >
                 {message.content}
+                
+                {/* Outfit suggestion display */}
+                {message.outfitSuggestion && (
+                  <div className="mt-3">
+                    <div className="text-sm font-medium mb-2 flex items-center gap-1">
+                      <Tag size={14} />
+                      {message.outfitSuggestion.occasion.charAt(0).toUpperCase() + message.outfitSuggestion.occasion.slice(1)} Outfit
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-2">
+                      {message.outfitSuggestion.items.map(item => (
+                        <div key={item.id} className="relative">
+                          <img 
+                            src={item.imageUrl} 
+                            alt={item.name}
+                            className="w-full h-24 object-cover rounded"
+                          />
+                          <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs p-1 truncate">
+                            {item.category}: {item.name}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           ))}
@@ -126,7 +327,7 @@ export const OutfitAdvisor = () => {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Ask for outfit recommendations..."
+              placeholder="Ask for outfit recommendations for an occasion..."
               className="flex-1 min-h-10 max-h-32 resize-none border rounded-md p-2"
               rows={1}
             />
