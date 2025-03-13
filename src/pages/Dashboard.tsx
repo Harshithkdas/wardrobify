@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Navigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -178,7 +177,7 @@ const Dashboard = () => {
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.3 }}
               >
-                <ClothingGrid />
+                <ClothingGrid categoryFilter={null} />
               </motion.div>
             )}
             

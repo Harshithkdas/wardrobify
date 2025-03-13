@@ -1,11 +1,10 @@
-
 import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import ClothingGrid from '@/components/ClothingGrid';
 import { useAuth } from '@/hooks/useAuth';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
-import { Shirt, Pants, Footprints, Layers, Filter } from "lucide-react";
+import { Shirt, Footprints, Layers, Filter } from "lucide-react";
 
 const Wardrobe = () => {
   const { user } = useAuth();
@@ -49,7 +48,7 @@ const Wardrobe = () => {
       case 'bottoms':
       case 'pants':
       case 'trousers':
-        return <Pants size={16} />;
+        return <Shirt size={16} />; // Using Shirt since Pants is not available
       case 'shoes':
       case 'footwear':
         return <Footprints size={16} />;
