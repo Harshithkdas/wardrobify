@@ -257,6 +257,14 @@ const ClothingGrid = ({ categoryFilter }: ClothingGridProps) => {
     item.color.toLowerCase().includes(searchQuery.toLowerCase())
   );
   
+  const categoryOptions = [
+    { value: 'Tops', label: 'Shirts' },
+    { value: 'Bottoms', label: 'Pants' },
+    { value: 'Shoes', label: 'Shoes' },
+    { value: 'Accessories', label: 'Accessories' },
+    { value: 'Outerwear', label: 'Outerwear' }
+  ];
+  
   const occasionOptions = [
     'Casual', 'Formal', 'Business', 'Party', 'Sports', 'Beach', 'Winter', 'Summer'
   ];
@@ -431,12 +439,11 @@ const ClothingGrid = ({ categoryFilter }: ClothingGridProps) => {
                     onChange={(e) => setNewItemCategory(e.target.value)}
                     className="w-full border-gray-300 rounded-md shadow-sm px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                   >
-                    <option value="Tops">Tops</option>
-                    <option value="Bottoms">Bottoms</option>
-                    <option value="Outerwear">Outerwear</option>
-                    <option value="Dresses">Dresses</option>
-                    <option value="Shoes">Shoes</option>
-                    <option value="Accessories">Accessories</option>
+                    {categoryOptions.map(option => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
                   </select>
                 </div>
                 

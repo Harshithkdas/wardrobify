@@ -1,15 +1,25 @@
+
 import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import ClothingGrid from '@/components/ClothingGrid';
 import { useAuth } from '@/hooks/useAuth';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
-import { Shirt, Footprints, Layers, Filter } from "lucide-react";
+import { Shirt, Footprints, Layers, Filter, ShoppingBag } from "lucide-react";
 
 const Wardrobe = () => {
   const { user } = useAuth();
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const [categories, setCategories] = useState<string[]>([]);
+  
+  // Predefined main categories
+  const mainCategories = [
+    { id: "all", name: "All Items", icon: <Filter size={16} /> },
+    { id: "Tops", name: "Shirts", icon: <Shirt size={16} /> },
+    { id: "Bottoms", name: "Pants", icon: <Layers size={16} /> },
+    { id: "Shoes", name: "Shoes", icon: <Footprints size={16} /> },
+    { id: "Accessories", name: "Accessories", icon: <ShoppingBag size={16} /> },
+  ];
   
   useEffect(() => {
     document.title = 'My Wardrobe | Wardrobify';
@@ -39,43 +49,21 @@ const Wardrobe = () => {
     return <Navigate to="/auth?type=login" replace />;
   }
 
-  // Helper function to get icon for category
-  const getCategoryIcon = (category: string) => {
-    switch (category.toLowerCase()) {
-      case 'tops':
-      case 'shirts':
-        return <Shirt size={16} />;
-      case 'bottoms':
-      case 'pants':
-      case 'trousers':
-        return <Shirt size={16} />; // Using Shirt since Pants is not available
-      case 'shoes':
-      case 'footwear':
-        return <Footprints size={16} />;
-      default:
-        return <Layers size={16} />;
-    }
-  };
-
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold mb-6">My Wardrobe</h1>
       
       <div className="mb-6">
         <Tabs defaultValue="all" onValueChange={setActiveCategory}>
-          <TabsList className="mb-4">
-            <TabsTrigger value="all" className="flex items-center gap-1">
-              <Filter size={16} />
-              All Items
-            </TabsTrigger>
-            {categories.map(category => (
+          <TabsList className="mb-4 flex flex-wrap">
+            {mainCategories.map(category => (
               <TabsTrigger 
-                key={category} 
-                value={category}
+                key={category.id} 
+                value={category.id}
                 className="flex items-center gap-1"
               >
-                {getCategoryIcon(category)}
-                {category}
+                {category.icon}
+                {category.name}
               </TabsTrigger>
             ))}
           </TabsList>
@@ -84,9 +72,9 @@ const Wardrobe = () => {
             <ClothingGrid categoryFilter={null} />
           </TabsContent>
           
-          {categories.map(category => (
-            <TabsContent key={category} value={category}>
-              <ClothingGrid categoryFilter={category} />
+          {mainCategories.slice(1).map(category => (
+            <TabsContent key={category.id} value={category.id}>
+              <ClothingGrid categoryFilter={category.id} />
             </TabsContent>
           ))}
         </Tabs>
