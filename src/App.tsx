@@ -1,41 +1,39 @@
+import React from 'react';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { Toaster } from 'sonner';
+import Index from './pages/Index';
+import Features from './pages/Features';
+import Dashboard from './pages/Dashboard';
+import Auth from './pages/Auth';
+import Wardrobe from './pages/Wardrobe';
+import OutfitBuilder from './pages/OutfitBuilder';
+import NotFound from './pages/NotFound';
+import Navbar from './components/Navbar';
+import Footer from './components/Footer';
+import { AuthProvider } from './hooks/useAuth';
+// Add the new CategoryPage import
+import CategoryPage from './pages/CategoryPage';
 
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "@/hooks/useAuth";
-import Index from "./pages/Index";
-import Auth from "./pages/Auth";
-import Dashboard from "./pages/Dashboard";
-import Wardrobe from "./pages/Wardrobe";
-import OutfitBuilder from "./pages/OutfitBuilder";
-import Features from "./pages/Features";
-import NotFound from "./pages/NotFound";
-
-const queryClient = new QueryClient();
-
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <AuthProvider>
+function App() {
+  return (
+    <AuthProvider>
+      <Router>
+        <Navbar />
         <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/wardrobe" element={<Wardrobe />} />
-            <Route path="/outfit-builder" element={<OutfitBuilder />} />
-            <Route path="/features" element={<Features />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </AuthProvider>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route path="/features" element={<Features />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/auth" element={<Auth />} />
+          <Route path="/wardrobe" element={<Wardrobe />} />
+          <Route path="/wardrobe/:category" element={<CategoryPage />} />
+          <Route path="/outfit-builder" element={<OutfitBuilder />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+        <Footer />
+      </Router>
+    </AuthProvider>
+  );
+}
 
 export default App;
