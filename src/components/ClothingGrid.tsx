@@ -20,45 +20,21 @@ interface ClothingItemType {
 
 interface ClothingGridProps {
   categoryFilter: string | null;
-  showAddButton?: boolean;
-  selectedCategory?: string | null;
-  showAddModal?: boolean;
-  setShowAddModal?: (show: boolean) => void;
 }
 
-const ClothingGrid = ({ 
-  categoryFilter, 
-  showAddButton = true,
-  selectedCategory = null,
-  showAddModal = false,
-  setShowAddModal = () => {}
-}: ClothingGridProps) => {
+const ClothingGrid = ({ categoryFilter }: ClothingGridProps) => {
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [items, setItems] = useState<ClothingItemType[]>([]);
-  const [localShowAddModal, setLocalShowAddModal] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
   const [newItemName, setNewItemName] = useState('');
-  const [newItemCategory, setNewItemCategory] = useState(categoryFilter || 'Tops');
+  const [newItemCategory, setNewItemCategory] = useState('Tops');
   const [newItemColor, setNewItemColor] = useState('');
   const [newItemOccasion, setNewItemOccasion] = useState<string[]>(['Casual']);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [addingItems, setAddingItems] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
-  // Use either the prop modal state or local state
-  const effectiveShowAddModal = showAddModal || localShowAddModal;
-  const effectiveSetShowAddModal = (value: boolean) => {
-    setShowAddModal(value);
-    setLocalShowAddModal(value);
-  };
-  
-  useEffect(() => {
-    // If we have a selected category, set it as the new item category
-    if (selectedCategory) {
-      setNewItemCategory(selectedCategory);
-    }
-  }, [selectedCategory]);
   
   useEffect(() => {
     const fetchClothingItems = async () => {
@@ -203,11 +179,11 @@ const ClothingGrid = ({
       }
       
       setNewItemName('');
-      setNewItemCategory(categoryFilter || 'Tops');
+      setNewItemCategory('Tops');
       setNewItemColor('');
       setNewItemOccasion(['Casual']);
       setSelectedImage(null);
-      effectiveSetShowAddModal(false);
+      setShowAddModal(false);
       
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
@@ -219,7 +195,7 @@ const ClothingGrid = ({
   };
   
   const handleAddNew = () => {
-    effectiveSetShowAddModal(true);
+    setShowAddModal(true);
   };
   
   const handleAddSampleItems = async () => {
@@ -295,44 +271,42 @@ const ClothingGrid = ({
   
   return (
     <div className="w-full">
-      {showAddButton && (
-        <div className="flex flex-col md:flex-row gap-4 justify-between mb-6">
-          <div className="relative w-full md:w-64">
-            <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <Input
-              type="search"
-              placeholder="Search your wardrobe"
-              className="pl-10"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-          
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" className="gap-1">
-              <Filter size={16} />
-              Filter
-            </Button>
-            <Button size="sm" onClick={handleAddNew} className="gap-1">
-              <PlusCircle size={16} />
-              Add Item
-            </Button>
-            <Button 
-              size="sm" 
-              onClick={handleAddSampleItems} 
-              disabled={addingItems}
-              className="gap-1"
-            >
-              <Shirt size={16} />
-              {addingItems ? 'Adding...' : 'Add Sample Items'}
-            </Button>
-          </div>
+      <div className="flex flex-col md:flex-row gap-4 justify-between mb-6">
+        <div className="relative w-full md:w-64">
+          <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <Input
+            type="search"
+            placeholder="Search your wardrobe"
+            className="pl-10"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
         </div>
-      )}
+        
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" className="gap-1">
+            <Filter size={16} />
+            Filter
+          </Button>
+          <Button size="sm" onClick={handleAddNew} className="gap-1">
+            <PlusCircle size={16} />
+            Add Item
+          </Button>
+          <Button 
+            size="sm" 
+            onClick={handleAddSampleItems} 
+            disabled={addingItems}
+            className="gap-1"
+          >
+            <Shirt size={16} />
+            {addingItems ? 'Adding...' : 'Add Sample Items'}
+          </Button>
+        </div>
+      </div>
       
       {isLoading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4">
-          {[1, 2, 3, 4].map((index) => (
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+          {[1, 2, 3, 4, 5, 6].map((index) => (
             <div key={index} className="animate-pulse">
               <div className="aspect-square bg-gray-200 rounded-xl"></div>
               <div className="h-4 bg-gray-200 rounded mt-2 w-3/4"></div>
@@ -341,21 +315,20 @@ const ClothingGrid = ({
           ))}
         </div>
       ) : filteredItems.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-8 text-center">
-          <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-            <Search size={20} className="text-gray-400" />
+        <div className="flex flex-col items-center justify-center py-12 text-center">
+          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+            <Search size={24} className="text-gray-400" />
           </div>
-          <h3 className="font-medium text-gray-900 mb-1 text-sm">No items found</h3>
-          <p className="text-gray-500 text-xs max-w-xs">
+          <h3 className="font-medium text-gray-900 mb-1">No items found</h3>
+          <p className="text-gray-500 text-sm max-w-xs">
             {searchQuery ? 
-              "We couldn't find any matching items." : 
-              categoryFilter ? `Add some ${categoryFilter.toLowerCase()} to your wardrobe!` : 
+              "We couldn't find any clothing items matching your search." : 
               "Your wardrobe is empty. Start adding your clothes!"}
           </p>
         </div>
       ) : (
         <motion.div 
-          className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4"
+          className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.3 }}
@@ -377,7 +350,7 @@ const ClothingGrid = ({
         </motion.div>
       )}
       
-      {effectiveShowAddModal && (
+      {showAddModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <motion.div 
             className="bg-white rounded-lg p-6 w-full max-w-md"
@@ -386,11 +359,9 @@ const ClothingGrid = ({
             transition={{ duration: 0.2 }}
           >
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold">
-                Add New {selectedCategory || newItemCategory}
-              </h2>
+              <h2 className="text-xl font-semibold">Add New Item</h2>
               <button 
-                onClick={() => effectiveSetShowAddModal(false)}
+                onClick={() => setShowAddModal(false)}
                 className="text-gray-500 hover:text-gray-700"
               >
                 <X size={20} />
@@ -458,25 +429,23 @@ const ClothingGrid = ({
                   />
                 </div>
                 
-                {!selectedCategory && (
-                  <div>
-                    <label htmlFor="item-category" className="block text-sm font-medium text-gray-700 mb-1">
-                      Category
-                    </label>
-                    <select
-                      id="item-category"
-                      value={newItemCategory}
-                      onChange={(e) => setNewItemCategory(e.target.value)}
-                      className="w-full border-gray-300 rounded-md shadow-sm px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    >
-                      {categoryOptions.map(option => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
+                <div>
+                  <label htmlFor="item-category" className="block text-sm font-medium text-gray-700 mb-1">
+                    Category
+                  </label>
+                  <select
+                    id="item-category"
+                    value={newItemCategory}
+                    onChange={(e) => setNewItemCategory(e.target.value)}
+                    className="w-full border-gray-300 rounded-md shadow-sm px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  >
+                    {categoryOptions.map(option => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
                 
                 <div>
                   <label htmlFor="item-color" className="block text-sm font-medium text-gray-700 mb-1">
@@ -519,7 +488,7 @@ const ClothingGrid = ({
                   <Button 
                     type="button" 
                     variant="outline"
-                    onClick={() => effectiveSetShowAddModal(false)}
+                    onClick={() => setShowAddModal(false)}
                   >
                     Cancel
                   </Button>
