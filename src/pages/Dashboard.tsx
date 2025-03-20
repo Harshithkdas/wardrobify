@@ -168,9 +168,9 @@ const Dashboard = () => {
         )}
         
         {/* Tab content */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Main content area - takes 2/3 of the space on medium screens and above */}
-          <div className={activeTab === 'advisor' ? "md:col-span-3" : "md:col-span-2"}>
+        <div className="grid grid-cols-1 gap-6">
+          {/* Main content area - takes full width now */}
+          <div className="col-span-1">
             {activeTab === 'wardrobe' && (
               <motion.div
                 initial={{ opacity: 0 }}
@@ -211,7 +211,7 @@ const Dashboard = () => {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.3 }}
-                className="bg-white rounded-xl p-6 shadow-sm h-full"
+                className="bg-white rounded-xl p-6 shadow-sm"
               >
                 <h2 className="text-lg font-medium mb-4">Calendar View</h2>
                 <p className="text-gray-500 mb-6">
@@ -233,13 +233,6 @@ const Dashboard = () => {
               </motion.div>
             )}
           </div>
-          
-          {/* Side panel - takes 1/3 of the space on medium screens and above */}
-          {activeTab !== 'advisor' && (
-            <div className="hidden md:block">
-              <CalendarWidget />
-            </div>
-          )}
         </div>
       </main>
     </div>
