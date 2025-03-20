@@ -65,9 +65,34 @@ export const useCanvasItems = (canvasWidth: number = 500, canvasHeight: number =
     // If no image URL is provided, use a default one
     const itemImageUrl = imageUrl || 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1480&q=80';
     
-    // Calculate a random position within the canvas boundaries
-    const randomX = Math.random() * (canvasWidth - 200) + 50;
-    const randomY = Math.random() * (canvasHeight - 200) + 50;
+    // Calculate position based on current items
+    // Position new items in a more organized way
+    let randomX, randomY;
+    
+    if (items.length === 0) {
+      // Center the first item
+      randomX = canvasWidth / 2 - 75;
+      randomY = canvasHeight / 2 - 75;
+    } else if (items.length === 1) {
+      // Second item to the right
+      randomX = canvasWidth / 2 + 50;
+      randomY = canvasHeight / 2 - 75;
+    } else if (items.length === 2) {
+      // Third item to the left
+      randomX = canvasWidth / 2 - 200;
+      randomY = canvasHeight / 2 - 75;
+    } else {
+      // Position other items in a grid-like pattern
+      const column = (items.length % 3);
+      const row = Math.floor(items.length / 3);
+      
+      randomX = (column * 150) + 50;
+      randomY = (row * 150) + 50;
+      
+      // Make sure items stay within canvas
+      randomX = Math.min(Math.max(randomX, 50), canvasWidth - 200);
+      randomY = Math.min(Math.max(randomY, 50), canvasHeight - 200);
+    }
     
     const newItem: CanvasItem = {
       id: `item-${Date.now()}-${Math.floor(Math.random() * 1000)}`,

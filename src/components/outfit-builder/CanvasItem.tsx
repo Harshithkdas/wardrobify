@@ -56,32 +56,39 @@ export const CanvasItem = ({
         width,
         height,
         zIndex,
+        transformOrigin: 'center',
       }}
-      className={`cursor-move ${isActive ? 'ring-2 ring-blue-500' : ''}`}
+      className={`${isActive ? 'ring-2 ring-blue-500' : ''}`}
     >
-      <img 
-        src={imageUrl} 
-        alt="Clothing item" 
-        className="w-full h-full object-contain pointer-events-none"
-      />
+      <div className="w-full h-full relative overflow-hidden">
+        <img 
+          src={imageUrl} 
+          alt="Clothing item" 
+          className="w-full h-full object-contain pointer-events-none"
+          style={{ maxWidth: '100%', maxHeight: '100%' }}
+        />
+      </div>
       
       {isActive && (
-        <div className="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-white rounded-md shadow-md flex items-center p-1">
+        <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-white rounded-md shadow-md flex items-center p-1 z-50">
           <button 
             onClick={() => onRotate(id, 'counterclockwise')}
             className="p-1 hover:bg-gray-100 rounded"
+            aria-label="Rotate counterclockwise"
           >
             ↺
           </button>
           <button 
             onClick={() => onRemove(id)}
             className="p-1 hover:bg-gray-100 rounded text-red-500"
+            aria-label="Remove item"
           >
             <Trash2 size={14} />
           </button>
           <button 
             onClick={() => onRotate(id, 'clockwise')}
             className="p-1 hover:bg-gray-100 rounded"
+            aria-label="Rotate clockwise"
           >
             ↻
           </button>
