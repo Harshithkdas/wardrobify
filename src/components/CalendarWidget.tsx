@@ -19,6 +19,7 @@ export const CalendarWidget = () => {
   const [events, setEvents] = React.useState<{[key: string]: string}>({});
   const [newEventName, setNewEventName] = React.useState<string>("");
   const [loadedOutfits, setLoadedOutfits] = React.useState<string[]>([]);
+  const [isLoading, setIsLoading] = React.useState<boolean>(false);
   
   // Function to format date as string key
   const formatDateKey = (date: Date): string => {
@@ -93,30 +94,35 @@ export const CalendarWidget = () => {
     }
     
     if (date && newEventName.trim()) {
-      // Update local state
-      setEvents(prev => ({
-        ...prev,
-        [formatDateKey(date)]: newEventName.trim()
-      }));
+      setIsLoading(true);
       
-      // Save to database
       try {
+        // Update local state
+        setEvents(prev => ({
+          ...prev,
+          [formatDateKey(date)]: newEventName.trim()
+        }));
+        
+        // Save to database using upsert with onConflict
         const { error } = await supabase
           .from('calendar_events')
           .upsert({
             user_id: user.id,
             date: formatDateKey(date),
             outfit: newEventName.trim()
-          }, { onConflict: 'user_id, date' });
+          }, { 
+            onConflict: 'user_id,date' 
+          });
           
         if (error) throw error;
         toast.success("Outfit scheduled for this date");
       } catch (error) {
         console.error("Error saving calendar event:", error);
         toast.error("Failed to save outfit to calendar");
+      } finally {
+        setIsLoading(false);
+        setNewEventName("");
       }
-      
-      setNewEventName("");
     }
   };
   
@@ -199,10 +205,10 @@ export const CalendarWidget = () => {
                       </datalist>
                       <Button 
                         onClick={handleAddEvent}
-                        disabled={!newEventName.trim()}
+                        disabled={!newEventName.trim() || isLoading}
                         className="rounded-l-none"
                       >
-                        Save
+                        {isLoading ? "Saving..." : "Save"}
                       </Button>
                     </div>
                   </div>
