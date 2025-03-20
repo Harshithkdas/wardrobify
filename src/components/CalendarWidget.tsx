@@ -43,7 +43,7 @@ export const CalendarWidget = () => {
     }
   }, [user]);
   
-  // Initialize with some sample events
+  // Load calendar events from Supabase
   React.useEffect(() => {
     if (user) {
       const fetchCalendarEvents = async () => {
@@ -58,8 +58,10 @@ export const CalendarWidget = () => {
             formattedEvents[event.date] = event.outfit;
           });
           setEvents(formattedEvents);
-        } else {
-          // If no events in database, set some sample events
+        } else if (error) {
+          console.error("Error fetching calendar events:", error);
+          
+          // If error, set some sample events
           const today = new Date();
           const tomorrow = new Date(today);
           tomorrow.setDate(tomorrow.getDate() + 1);
@@ -130,81 +132,83 @@ export const CalendarWidget = () => {
         <CardTitle className="text-xl">Outfit Calendar</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid md:grid-cols-2 gap-6">
-          <div>
-            <Calendar
-              mode="single"
-              selected={date}
-              onSelect={setDate}
-              className="rounded-md border pointer-events-auto"
-            />
-          </div>
-          
-          <div>
-            {date && (
-              <div className="p-4 bg-gray-50 rounded-md h-full">
-                <h3 className="font-medium">
-                  {date.toLocaleDateString('en-US', { 
-                    weekday: 'long', 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric' 
-                  })}
-                </h3>
-                
-                {currentDateEvent ? (
-                  <div className="mt-4">
-                    <div className="flex justify-between items-center">
-                      <h4 className="text-sm font-medium text-gray-500">Planned Outfit:</h4>
+        <div className="grid grid-cols-1 gap-6">
+          <div className="flex flex-col items-center md:flex-row md:items-start gap-6">
+            <div className="w-full md:w-1/2">
+              <Calendar
+                mode="single"
+                selected={date}
+                onSelect={setDate}
+                className="rounded-md border pointer-events-auto"
+              />
+            </div>
+            
+            <div className="w-full md:w-1/2">
+              {date && (
+                <div className="p-4 bg-gray-50 rounded-md h-full">
+                  <h3 className="font-medium">
+                    {date.toLocaleDateString('en-US', { 
+                      weekday: 'long', 
+                      year: 'numeric', 
+                      month: 'long', 
+                      day: 'numeric' 
+                    })}
+                  </h3>
+                  
+                  {currentDateEvent ? (
+                    <div className="mt-4">
+                      <div className="flex justify-between items-center">
+                        <h4 className="text-sm font-medium text-gray-500">Planned Outfit:</h4>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => {
+                            setNewEventName(currentDateEvent);
+                          }}
+                        >
+                          Edit
+                        </Button>
+                      </div>
+                      <p className="text-lg mt-2 p-3 bg-white rounded border border-gray-200">
+                        {currentDateEvent}
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="text-gray-500 mt-2">No outfit planned for this day.</p>
+                  )}
+                  
+                  <div className="mt-6">
+                    <Label htmlFor="event-name" className="text-sm font-medium">
+                      {currentDateEvent ? "Change outfit for this day:" : "Add an outfit for this day:"}
+                    </Label>
+                    <div className="flex mt-1">
+                      <input
+                        id="event-name"
+                        type="text"
+                        value={newEventName}
+                        onChange={(e) => setNewEventName(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        className="flex-1 px-3 py-2 text-sm border rounded-l-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        placeholder="Enter outfit description"
+                        list="saved-outfits"
+                      />
+                      <datalist id="saved-outfits">
+                        {loadedOutfits.map((outfit, index) => (
+                          <option key={index} value={outfit} />
+                        ))}
+                      </datalist>
                       <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => {
-                          setNewEventName(currentDateEvent);
-                        }}
+                        onClick={handleAddEvent}
+                        disabled={!newEventName.trim()}
+                        className="rounded-l-none"
                       >
-                        Edit
+                        Save
                       </Button>
                     </div>
-                    <p className="text-lg mt-2 p-3 bg-white rounded border border-gray-200">
-                      {currentDateEvent}
-                    </p>
-                  </div>
-                ) : (
-                  <p className="text-gray-500 mt-2">No outfit planned for this day.</p>
-                )}
-                
-                <div className="mt-6">
-                  <Label htmlFor="event-name" className="text-sm font-medium">
-                    {currentDateEvent ? "Change outfit for this day:" : "Add an outfit for this day:"}
-                  </Label>
-                  <div className="flex mt-1">
-                    <input
-                      id="event-name"
-                      type="text"
-                      value={newEventName}
-                      onChange={(e) => setNewEventName(e.target.value)}
-                      onKeyDown={handleKeyDown}
-                      className="flex-1 px-3 py-2 text-sm border rounded-l-md focus:outline-none focus:ring-1 focus:ring-blue-500"
-                      placeholder="Enter outfit description"
-                      list="saved-outfits"
-                    />
-                    <datalist id="saved-outfits">
-                      {loadedOutfits.map((outfit, index) => (
-                        <option key={index} value={outfit} />
-                      ))}
-                    </datalist>
-                    <Button 
-                      onClick={handleAddEvent}
-                      disabled={!newEventName.trim()}
-                      className="rounded-l-none"
-                    >
-                      Save
-                    </Button>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
       </CardContent>
