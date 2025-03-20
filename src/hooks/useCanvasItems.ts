@@ -65,42 +65,35 @@ export const useCanvasItems = (canvasWidth: number = 500, canvasHeight: number =
     // If no image URL is provided, use a default one
     const itemImageUrl = imageUrl || 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1480&q=80';
     
-    // Calculate position based on current items
-    // Position new items in a more organized way
-    let randomX, randomY;
+    // Position new items in a row-based layout
+    let posX, posY;
     
-    if (items.length === 0) {
-      // Center the first item
-      randomX = canvasWidth / 2 - 75;
-      randomY = canvasHeight / 2 - 75;
-    } else if (items.length === 1) {
-      // Second item to the right
-      randomX = canvasWidth / 2 + 50;
-      randomY = canvasHeight / 2 - 75;
-    } else if (items.length === 2) {
-      // Third item to the left
-      randomX = canvasWidth / 2 - 200;
-      randomY = canvasHeight / 2 - 75;
-    } else {
-      // Position other items in a grid-like pattern
-      const column = (items.length % 3);
-      const row = Math.floor(items.length / 3);
-      
-      randomX = (column * 150) + 50;
-      randomY = (row * 150) + 50;
-      
-      // Make sure items stay within canvas
-      randomX = Math.min(Math.max(randomX, 50), canvasWidth - 200);
-      randomY = Math.min(Math.max(randomY, 50), canvasHeight - 200);
-    }
+    // Default height for positioning
+    const itemHeight = 150;
+    const itemWidth = 150;
+    const itemGap = 20;
+    const itemsPerRow = 3;
+    
+    // Calculate the row and column
+    const itemsCount = items.length;
+    const row = Math.floor(itemsCount / itemsPerRow);
+    const col = itemsCount % itemsPerRow;
+    
+    // Calculate position
+    posX = col * (itemWidth + itemGap) + 50; // Start from left with padding
+    posY = row * (itemHeight + itemGap) + 50; // Top padding
+    
+    // Make sure items stay within canvas
+    posX = Math.min(Math.max(posX, 20), canvasWidth - itemWidth - 20);
+    posY = Math.min(Math.max(posY, 20), canvasHeight - itemHeight - 20);
     
     const newItem: CanvasItem = {
       id: `item-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
       imageUrl: itemImageUrl,
-      x: randomX,
-      y: randomY,
-      width: 150,
-      height: 150,
+      x: posX,
+      y: posY,
+      width: itemWidth,
+      height: itemHeight,
       zIndex: items.length,
       rotation: 0
     };
