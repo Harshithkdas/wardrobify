@@ -72,118 +72,120 @@ const Dashboard = () => {
       )}
       
       {/* Sidebar */}
-      <motion.aside
-        initial={isMobile ? { x: '-100%' } : { x: 0 }}
-        animate={{ x: sidebarOpen ? 0 : '-100%' }}
-        transition={{ duration: 0.3 }}
-        className={`fixed md:relative z-20 w-64 h-screen bg-white border-r border-gray-200 flex flex-col ${
-          isMobile && sidebarOpen ? 'shadow-xl' : ''
-        }`}
-      >
-        <SidebarHeader className="p-4 border-b border-gray-100">
-          <h1 className="text-xl font-semibold">Wardrobify</h1>
-          <p className="text-sm text-gray-500">Your virtual wardrobe</p>
-        </SidebarHeader>
-        
-        <ScrollArea className="flex-1">
-          <SidebarContent className="p-4 space-y-1">
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  onClick={() => setActiveTab('wardrobe')}
-                  isActive={activeTab === 'wardrobe'}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-                    activeTab === 'wardrobe' 
-                      ? 'bg-blue-50 text-blue-700' 
-                      : 'hover:bg-gray-100 text-gray-700'
-                  }`}
-                >
-                  <Shirt size={20} />
-                  <span>My Wardrobe</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  onClick={() => setActiveTab('outfits')}
-                  isActive={activeTab === 'outfits'}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-                    activeTab === 'outfits' 
-                      ? 'bg-blue-50 text-blue-700' 
-                      : 'hover:bg-gray-100 text-gray-700'
-                  }`}
-                >
-                  <Palette size={20} />
-                  <span>Outfit Builder</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  onClick={() => setActiveTab('calendar')}
-                  isActive={activeTab === 'calendar'}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-                    activeTab === 'calendar' 
-                      ? 'bg-blue-50 text-blue-700' 
-                      : 'hover:bg-gray-100 text-gray-700'
-                  }`}
-                >
-                  <Calendar size={20} />
-                  <span>Calendar</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  onClick={() => setActiveTab('advisor')}
-                  isActive={activeTab === 'advisor'}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-                    activeTab === 'advisor' 
-                      ? 'bg-blue-50 text-blue-700' 
-                      : 'hover:bg-gray-100 text-gray-700'
-                  }`}
-                >
-                  <MessageSquare size={20} />
-                  <span>Outfit Advisor</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarContent>
-        </ScrollArea>
-        
-        <SidebarFooter className="mt-auto p-4 border-t border-gray-100">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
-              {user.name.charAt(0)}
-            </div>
-            <div>
-              <p className="font-medium">{user.name}</p>
-              <p className="text-xs text-gray-500">{user.email}</p>
-            </div>
-          </div>
+      <SidebarProvider>
+        <motion.aside
+          initial={isMobile ? { x: '-100%' } : { x: 0 }}
+          animate={{ x: sidebarOpen ? 0 : '-100%' }}
+          transition={{ duration: 0.3 }}
+          className={`fixed md:relative z-20 w-64 h-screen bg-white border-r border-gray-200 flex flex-col ${
+            isMobile && sidebarOpen ? 'shadow-xl' : ''
+          }`}
+        >
+          <SidebarHeader className="p-4 border-b border-gray-100">
+            <h1 className="text-xl font-semibold">Wardrobify</h1>
+            <p className="text-sm text-gray-500">Your virtual wardrobe</p>
+          </SidebarHeader>
           
-          <div className="flex flex-col gap-2">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="justify-start gap-2"
-              onClick={() => setSettingsOpen(true)}
-            >
-              <Settings size={16} />
-              Settings
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="justify-start gap-2 text-red-600 hover:text-red-700 hover:bg-red-50"
-              onClick={logout}
-            >
-              <LogOut size={16} />
-              Sign Out
-            </Button>
-          </div>
-        </SidebarFooter>
-      </motion.aside>
+          <ScrollArea className="flex-1">
+            <SidebarContent className="p-4 space-y-1">
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    onClick={() => setActiveTab('wardrobe')}
+                    isActive={activeTab === 'wardrobe'}
+                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+                      activeTab === 'wardrobe' 
+                        ? 'bg-blue-50 text-blue-700' 
+                        : 'hover:bg-gray-100 text-gray-700'
+                    }`}
+                  >
+                    <Shirt size={20} />
+                    <span>My Wardrobe</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    onClick={() => setActiveTab('outfits')}
+                    isActive={activeTab === 'outfits'}
+                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+                      activeTab === 'outfits' 
+                        ? 'bg-blue-50 text-blue-700' 
+                        : 'hover:bg-gray-100 text-gray-700'
+                    }`}
+                  >
+                    <Palette size={20} />
+                    <span>Outfit Builder</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    onClick={() => setActiveTab('calendar')}
+                    isActive={activeTab === 'calendar'}
+                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+                      activeTab === 'calendar' 
+                        ? 'bg-blue-50 text-blue-700' 
+                        : 'hover:bg-gray-100 text-gray-700'
+                    }`}
+                  >
+                    <Calendar size={20} />
+                    <span>Calendar</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    onClick={() => setActiveTab('advisor')}
+                    isActive={activeTab === 'advisor'}
+                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+                      activeTab === 'advisor' 
+                        ? 'bg-blue-50 text-blue-700' 
+                        : 'hover:bg-gray-100 text-gray-700'
+                    }`}
+                  >
+                    <MessageSquare size={20} />
+                    <span>Outfit Advisor</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarContent>
+          </ScrollArea>
+          
+          <SidebarFooter className="mt-auto p-4 border-t border-gray-100">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
+                {user.name.charAt(0)}
+              </div>
+              <div>
+                <p className="font-medium">{user.name}</p>
+                <p className="text-xs text-gray-500">{user.email}</p>
+              </div>
+            </div>
+            
+            <div className="flex flex-col gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="justify-start gap-2"
+                onClick={() => setSettingsOpen(true)}
+              >
+                <Settings size={16} />
+                Settings
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="justify-start gap-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+                onClick={logout}
+              >
+                <LogOut size={16} />
+                Sign Out
+              </Button>
+            </div>
+          </SidebarFooter>
+        </motion.aside>
+      </SidebarProvider>
       
       {/* Settings Sheet/Modal */}
       <Sheet open={settingsOpen} onOpenChange={setSettingsOpen}>
