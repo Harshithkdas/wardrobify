@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Navigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -9,33 +8,12 @@ import ClothingGrid from '@/components/ClothingGrid';
 import { WeatherWidget } from '@/components/WeatherWidget';
 import { CalendarWidget } from '@/components/CalendarWidget';
 import { OutfitAdvisor } from '@/components/OutfitAdvisor';
-import { 
-  SidebarProvider, 
-  Sidebar, 
-  SidebarContent,
-  SidebarFooter,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
-  SidebarHeader 
-} from '@/components/ui/sidebar';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-  SheetFooter,
-  SheetClose,
-} from "@/components/ui/sheet";
 
 const Dashboard = () => {
   const { user, logout } = useAuth();
   const [activeTab, setActiveTab] = useState('wardrobe');
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
-  const [settingsOpen, setSettingsOpen] = useState(false);
   
   // Check for mobile view
   useEffect(() => {
@@ -72,157 +50,97 @@ const Dashboard = () => {
       )}
       
       {/* Sidebar */}
-      <SidebarProvider>
-        <motion.aside
-          initial={isMobile ? { x: '-100%' } : { x: 0 }}
-          animate={{ x: sidebarOpen ? 0 : '-100%' }}
-          transition={{ duration: 0.3 }}
-          className={`fixed md:relative z-20 w-64 h-screen bg-white border-r border-gray-200 flex flex-col ${
-            isMobile && sidebarOpen ? 'shadow-xl' : ''
-          }`}
-        >
-          <SidebarHeader className="p-4 border-b border-gray-100">
-            <h1 className="text-xl font-semibold">Wardrobify</h1>
-            <p className="text-sm text-gray-500">Your virtual wardrobe</p>
-          </SidebarHeader>
+      <motion.aside
+        initial={isMobile ? { x: '-100%' } : { x: 0 }}
+        animate={{ x: sidebarOpen ? 0 : '-100%' }}
+        transition={{ duration: 0.3 }}
+        className={`fixed md:relative z-20 w-64 h-screen bg-white border-r border-gray-200 flex flex-col ${
+          isMobile && sidebarOpen ? 'shadow-xl' : ''
+        }`}
+      >
+        <div className="p-4 border-b border-gray-100">
+          <h1 className="text-xl font-semibold">Wardrobify</h1>
+          <p className="text-sm text-gray-500">Your virtual wardrobe</p>
+        </div>
+        
+        <nav className="flex-1 p-4 space-y-1">
+          <button
+            onClick={() => setActiveTab('wardrobe')}
+            className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+              activeTab === 'wardrobe' 
+                ? 'bg-blue-50 text-blue-700' 
+                : 'hover:bg-gray-100 text-gray-700'
+            }`}
+          >
+            <Shirt size={20} />
+            <span>My Wardrobe</span>
+          </button>
           
-          <ScrollArea className="flex-1">
-            <SidebarContent className="p-4 space-y-1">
-              <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    onClick={() => setActiveTab('wardrobe')}
-                    isActive={activeTab === 'wardrobe'}
-                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-                      activeTab === 'wardrobe' 
-                        ? 'bg-blue-50 text-blue-700' 
-                        : 'hover:bg-gray-100 text-gray-700'
-                    }`}
-                  >
-                    <Shirt size={20} />
-                    <span>My Wardrobe</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    onClick={() => setActiveTab('outfits')}
-                    isActive={activeTab === 'outfits'}
-                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-                      activeTab === 'outfits' 
-                        ? 'bg-blue-50 text-blue-700' 
-                        : 'hover:bg-gray-100 text-gray-700'
-                    }`}
-                  >
-                    <Palette size={20} />
-                    <span>Outfit Builder</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    onClick={() => setActiveTab('calendar')}
-                    isActive={activeTab === 'calendar'}
-                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-                      activeTab === 'calendar' 
-                        ? 'bg-blue-50 text-blue-700' 
-                        : 'hover:bg-gray-100 text-gray-700'
-                    }`}
-                  >
-                    <Calendar size={20} />
-                    <span>Calendar</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    onClick={() => setActiveTab('advisor')}
-                    isActive={activeTab === 'advisor'}
-                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-                      activeTab === 'advisor' 
-                        ? 'bg-blue-50 text-blue-700' 
-                        : 'hover:bg-gray-100 text-gray-700'
-                    }`}
-                  >
-                    <MessageSquare size={20} />
-                    <span>Outfit Advisor</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </SidebarMenu>
-            </SidebarContent>
-          </ScrollArea>
+          <button
+            onClick={() => setActiveTab('outfits')}
+            className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+              activeTab === 'outfits' 
+                ? 'bg-blue-50 text-blue-700' 
+                : 'hover:bg-gray-100 text-gray-700'
+            }`}
+          >
+            <Palette size={20} />
+            <span>Outfit Builder</span>
+          </button>
           
-          <SidebarFooter className="mt-auto p-4 border-t border-gray-100">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
-                {user.name.charAt(0)}
-              </div>
-              <div>
-                <p className="font-medium">{user.name}</p>
-                <p className="text-xs text-gray-500">{user.email}</p>
-              </div>
+          <button
+            onClick={() => setActiveTab('calendar')}
+            className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+              activeTab === 'calendar' 
+                ? 'bg-blue-50 text-blue-700' 
+                : 'hover:bg-gray-100 text-gray-700'
+            }`}
+          >
+            <Calendar size={20} />
+            <span>Calendar</span>
+          </button>
+          
+          <button
+            onClick={() => setActiveTab('advisor')}
+            className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+              activeTab === 'advisor' 
+                ? 'bg-blue-50 text-blue-700' 
+                : 'hover:bg-gray-100 text-gray-700'
+            }`}
+          >
+            <MessageSquare size={20} />
+            <span>Outfit Advisor</span>
+          </button>
+        </nav>
+        
+        <div className="p-4 border-t border-gray-100">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
+              {user.name.charAt(0)}
             </div>
-            
-            <div className="flex flex-col gap-2">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="justify-start gap-2"
-                onClick={() => setSettingsOpen(true)}
-              >
-                <Settings size={16} />
-                Settings
-              </Button>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="justify-start gap-2 text-red-600 hover:text-red-700 hover:bg-red-50"
-                onClick={logout}
-              >
-                <LogOut size={16} />
-                Sign Out
-              </Button>
-            </div>
-          </SidebarFooter>
-        </motion.aside>
-      </SidebarProvider>
-      
-      {/* Settings Sheet/Modal */}
-      <Sheet open={settingsOpen} onOpenChange={setSettingsOpen}>
-        <SheetContent>
-          <SheetHeader>
-            <SheetTitle>Settings</SheetTitle>
-            <SheetDescription>
-              Customize your Wardrobify experience
-            </SheetDescription>
-          </SheetHeader>
-          
-          <div className="py-6">
-            <div className="space-y-4">
-              <div>
-                <h3 className="text-sm font-medium">Account</h3>
-                <p className="text-sm text-gray-500">Manage your account settings</p>
-              </div>
-              
-              <div>
-                <h3 className="text-sm font-medium">Theme</h3>
-                <p className="text-sm text-gray-500">Customize the appearance of the app</p>
-              </div>
-              
-              <div>
-                <h3 className="text-sm font-medium">Privacy</h3>
-                <p className="text-sm text-gray-500">Manage your privacy settings</p>
-              </div>
+            <div>
+              <p className="font-medium">{user.name}</p>
+              <p className="text-xs text-gray-500">{user.email}</p>
             </div>
           </div>
           
-          <SheetFooter>
-            <SheetClose asChild>
-              <Button type="button" variant="outline">Close</Button>
-            </SheetClose>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
+          <div className="flex flex-col gap-2">
+            <Button variant="outline" size="sm" className="justify-start gap-2">
+              <Settings size={16} />
+              Settings
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="justify-start gap-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+              onClick={logout}
+            >
+              <LogOut size={16} />
+              Sign Out
+            </Button>
+          </div>
+        </div>
+      </motion.aside>
       
       {/* Main content */}
       <main className="flex-1 p-6 md:p-8 overflow-auto">
