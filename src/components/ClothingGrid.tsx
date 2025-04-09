@@ -8,6 +8,12 @@ import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { sampleMensClothingItems } from '@/utils/sampleClothingItems';
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuCheckboxItem, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
 
 interface ClothingItemType {
   id: string;
@@ -35,6 +41,12 @@ const ClothingGrid = ({ categoryFilter }: ClothingGridProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [addingItems, setAddingItems] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Add filter states
+  const [colorFilters, setColorFilters] = useState<string[]>([]);
+  const [occasionFilters, setOccasionFilters] = useState<string[]>([]);
+  const [availableColors, setAvailableColors] = useState<string[]>([]);
+  const [availableOccasions, setAvailableOccasions] = useState<string[]>([]);
   
   useEffect(() => {
     const fetchClothingItems = async () => {
@@ -68,6 +80,13 @@ const ClothingGrid = ({ categoryFilter }: ClothingGridProps) => {
         }));
         
         setItems(formattedItems);
+        
+        // Extract available colors and occasions for filters
+        const colors = [...new Set(formattedItems.map(item => item.color))];
+        setAvailableColors(colors);
+        
+        const occasions = [...new Set(formattedItems.flatMap(item => item.occasion || []))];
+        setAvailableOccasions(occasions);
       } catch (error: any) {
         console.error('Error fetching clothing items:', error);
         toast.error('Failed to load your wardrobe');
@@ -251,11 +270,41 @@ const ClothingGrid = ({ categoryFilter }: ClothingGridProps) => {
     }
   };
   
-  const filteredItems = items.filter(item => 
-    item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.color.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Apply all filters
+  const filteredItems = items.filter(item => {
+    const matchesSearch = 
+      item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.color.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesColor = colorFilters.length === 0 || colorFilters.includes(item.color);
+    
+    const matchesOccasion = occasionFilters.length === 0 || 
+      (item.occasion && item.occasion.some(occ => occasionFilters.includes(occ)));
+    
+    return matchesSearch && matchesColor && matchesOccasion;
+  });
+  
+  const toggleColorFilter = (color: string) => {
+    setColorFilters(prev => 
+      prev.includes(color) 
+        ? prev.filter(c => c !== color) 
+        : [...prev, color]
+    );
+  };
+  
+  const toggleOccasionFilter = (occasion: string) => {
+    setOccasionFilters(prev => 
+      prev.includes(occasion) 
+        ? prev.filter(o => o !== occasion) 
+        : [...prev, occasion]
+    );
+  };
+  
+  const clearFilters = () => {
+    setColorFilters([]);
+    setOccasionFilters([]);
+  };
   
   const categoryOptions = [
     { value: 'Tops', label: 'Shirts' },
@@ -284,10 +333,58 @@ const ClothingGrid = ({ categoryFilter }: ClothingGridProps) => {
         </div>
         
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" className="gap-1">
-            <Filter size={16} />
-            Filter
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-1">
+                <Filter size={16} />
+                Filter {(colorFilters.length > 0 || occasionFilters.length > 0) && 
+                  `(${colorFilters.length + occasionFilters.length})`}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56 bg-white p-2">
+              {availableColors.length > 0 && (
+                <>
+                  <p className="text-xs font-medium text-gray-500 px-2 py-1.5">Colors</p>
+                  {availableColors.map(color => (
+                    <DropdownMenuCheckboxItem
+                      key={`color-${color}`}
+                      checked={colorFilters.includes(color)}
+                      onCheckedChange={() => toggleColorFilter(color)}
+                    >
+                      {color}
+                    </DropdownMenuCheckboxItem>
+                  ))}
+                </>
+              )}
+              
+              {availableOccasions.length > 0 && (
+                <>
+                  <p className="text-xs font-medium text-gray-500 px-2 py-1.5 mt-2">Occasions</p>
+                  {availableOccasions.map(occasion => (
+                    <DropdownMenuCheckboxItem
+                      key={`occasion-${occasion}`}
+                      checked={occasionFilters.includes(occasion)}
+                      onCheckedChange={() => toggleOccasionFilter(occasion)}
+                    >
+                      {occasion}
+                    </DropdownMenuCheckboxItem>
+                  ))}
+                </>
+              )}
+              
+              {(colorFilters.length > 0 || occasionFilters.length > 0) && (
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={clearFilters}
+                  className="w-full mt-2"
+                >
+                  Clear filters
+                </Button>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+          
           <Button size="sm" onClick={handleAddNew} className="gap-1">
             <PlusCircle size={16} />
             Add Item
@@ -303,6 +400,7 @@ const ClothingGrid = ({ categoryFilter }: ClothingGridProps) => {
           </Button>
         </div>
       </div>
+      
       
       {isLoading ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
@@ -321,8 +419,8 @@ const ClothingGrid = ({ categoryFilter }: ClothingGridProps) => {
           </div>
           <h3 className="font-medium text-gray-900 mb-1">No items found</h3>
           <p className="text-gray-500 text-sm max-w-xs">
-            {searchQuery ? 
-              "We couldn't find any clothing items matching your search." : 
+            {searchQuery || colorFilters.length > 0 || occasionFilters.length > 0 ? 
+              "We couldn't find any clothing items matching your filters." : 
               "Your wardrobe is empty. Start adding your clothes!"}
           </p>
         </div>
@@ -349,6 +447,7 @@ const ClothingGrid = ({ categoryFilter }: ClothingGridProps) => {
           ))}
         </motion.div>
       )}
+      
       
       {showAddModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
