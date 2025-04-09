@@ -1,14 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Navigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Shirt, Calendar, Palette, PlusCircle, Settings, LogOut, Menu, X, MessageSquare, BarChart } from 'lucide-react';
+import { Shirt, Calendar, Palette, PlusCircle, Settings, LogOut, Menu, X, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import ClothingGrid from '@/components/ClothingGrid';
 import { WeatherWidget } from '@/components/WeatherWidget';
 import { CalendarWidget } from '@/components/CalendarWidget';
 import { OutfitAdvisor } from '@/components/OutfitAdvisor';
-import { MostWornItems } from '@/components/MostWornItems';
 
 const Dashboard = () => {
   const { user, logout } = useAuth();
@@ -64,8 +63,7 @@ const Dashboard = () => {
           <p className="text-sm text-gray-500">Your virtual wardrobe</p>
         </div>
         
-        {/* Make the nav scrollable while keeping footer fixed */}
-        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+        <nav className="flex-1 p-4 space-y-1">
           <button
             onClick={() => setActiveTab('wardrobe')}
             className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
@@ -113,22 +111,9 @@ const Dashboard = () => {
             <MessageSquare size={20} />
             <span>Outfit Advisor</span>
           </button>
-          
-          <button
-            onClick={() => setActiveTab('most-worn')}
-            className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-              activeTab === 'most-worn' 
-                ? 'bg-blue-50 text-blue-700' 
-                : 'hover:bg-gray-100 text-gray-700'
-            }`}
-          >
-            <BarChart size={20} />
-            <span>Most Worn Items</span>
-          </button>
         </nav>
         
-        {/* Settings and logout section - Now with fixed position at the bottom */}
-        <div className="p-4 border-t border-gray-100 bg-white sticky bottom-0 left-0 right-0 mt-auto">
+        <div className="p-4 border-t border-gray-100">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
               {user.name.charAt(0)}
@@ -166,19 +151,17 @@ const Dashboard = () => {
             {activeTab === 'outfits' && 'Outfit Builder'}
             {activeTab === 'calendar' && 'Calendar'}
             {activeTab === 'advisor' && 'Outfit Advisor'}
-            {activeTab === 'most-worn' && 'Most Worn Items'}
           </h1>
           <p className="text-gray-600">
             {activeTab === 'wardrobe' && 'Manage and organize your clothing items'}
             {activeTab === 'outfits' && 'Create and save outfit combinations'}
             {activeTab === 'calendar' && 'Plan your outfits by date'}
             {activeTab === 'advisor' && 'Get AI-powered outfit recommendations'}
-            {activeTab === 'most-worn' && 'See your most and least frequently worn items'}
           </p>
         </header>
         
-        {/* Weather widget - always visible except in advisor tab and most worn tab */}
-        {activeTab !== 'advisor' && activeTab !== 'most-worn' && (
+        {/* Weather widget - always visible except in advisor tab */}
+        {activeTab !== 'advisor' && (
           <div className="mb-6">
             <WeatherWidget />
           </div>
@@ -247,17 +230,6 @@ const Dashboard = () => {
                 className="bg-white rounded-xl shadow-sm h-[600px]"
               >
                 <OutfitAdvisor />
-              </motion.div>
-            )}
-            
-            {activeTab === 'most-worn' && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.3 }}
-                className="bg-white rounded-xl shadow-sm"
-              >
-                <MostWornItems />
               </motion.div>
             )}
           </div>
