@@ -8,21 +8,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { Shirt, Footprints, Layers, Filter, ShoppingBag, Palette } from "lucide-react";
 
-interface ClothingItem {
-  id: string;
-  name: string;
-  category: string;
-  color: string;
-  imageUrl: string;
-  occasion?: string[];
-}
-
 const Wardrobe = () => {
   const { user } = useAuth();
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const [showColorAssistant, setShowColorAssistant] = useState(false);
   const [categories, setCategories] = useState<string[]>([]);
-  const [userWardrobe, setUserWardrobe] = useState<ClothingItem[]>([]);
   
   // Predefined main categories
   const mainCategories = [
@@ -53,28 +43,6 @@ const Wardrobe = () => {
       };
       
       fetchCategories();
-
-      // Fetch all wardrobe items for color matching
-      const fetchWardrobeItems = async () => {
-        const { data, error } = await supabase
-          .from('clothing_items')
-          .select('id, name, category, color, image')
-          .eq('user_id', user.id);
-        
-        if (!error && data) {
-          const formattedItems = data.map(item => ({
-            id: item.id,
-            name: item.name,
-            category: item.category,
-            color: item.color,
-            imageUrl: item.image
-          }));
-          
-          setUserWardrobe(formattedItems);
-        }
-      };
-      
-      fetchWardrobeItems();
     }
   }, [user]);
   
@@ -98,7 +66,7 @@ const Wardrobe = () => {
       
       {showColorAssistant && (
         <div className="mb-6">
-          <ColorMatchingAssistant userWardrobe={userWardrobe} />
+          <ColorMatchingAssistant />
         </div>
       )}
       

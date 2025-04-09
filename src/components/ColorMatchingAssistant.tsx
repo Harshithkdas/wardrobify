@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
-import { Palette, RefreshCw, Info, Check, ArrowRight, Shirt, Search, Target, X } from 'lucide-react';
+
+import { useState } from 'react';
+import { Palette, RefreshCw, Info, Check, ArrowRight } from 'lucide-react';
 import { 
   Select, 
   SelectContent, 
@@ -10,24 +11,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface ColorScheme {
   name: string;
   colors: string[];
   description: string;
-}
-
-interface ClothingItem {
-  id: string;
-  name: string;
-  category: string;
-  color: string;
-  imageUrl: string;
-}
-
-interface ColorMatchingAssistantProps {
-  userWardrobe?: ClothingItem[];
 }
 
 const COLOR_PALETTES = {
@@ -131,166 +119,21 @@ const CLOTHING_SUGGESTIONS = {
   neutral: "Neutral pairings work well for versatile, everyday outfits. The base color provides interest while neutrals balance the look."
 };
 
-// Helper function to determine if a color is close to another color
-const isColorSimilar = (color1: string, color2: string): boolean => {
-  // Simple color matching based on color name
-  // In a real app, you'd use RGB comparison
-  if (!color1 || !color2) return false;
-  
-  const color1Lower = color1.toLowerCase();
-  const color2Lower = color2.toLowerCase();
-  
-  // Check if the color names are similar
-  if (color1Lower === color2Lower) return true;
-  
-  // Check for color families
-  const colorFamilies = {
-    red: ['red', 'crimson', 'maroon', 'burgundy', 'ruby'],
-    blue: ['blue', 'navy', 'azure', 'cobalt', 'sky', 'teal', 'turquoise'],
-    green: ['green', 'olive', 'emerald', 'lime', 'mint', 'sage'],
-    yellow: ['yellow', 'gold', 'amber', 'mustard'],
-    orange: ['orange', 'peach', 'coral', 'salmon'],
-    purple: ['purple', 'violet', 'lavender', 'plum', 'magenta', 'mauve'],
-    pink: ['pink', 'rose', 'fuchsia'],
-    brown: ['brown', 'tan', 'beige', 'khaki', 'camel'],
-    gray: ['gray', 'grey', 'silver', 'charcoal'],
-    black: ['black'],
-    white: ['white', 'ivory', 'cream']
-  };
-  
-  // Check if both colors belong to the same family
-  for (const [family, variations] of Object.entries(colorFamilies)) {
-    if (variations.some(v => color1Lower.includes(v)) && 
-        variations.some(v => color2Lower.includes(v))) {
-      return true;
-    }
-  }
-  
-  return false;
-};
-
-// Helper function to find matching items from wardrobe
-const findMatchingItems = (
-  baseColor: string, 
-  schemeType: SchemeType, 
-  wardrobe: ClothingItem[]
-): ClothingItem[][] => {
-  if (!wardrobe || wardrobe.length === 0) return [];
-  
-  const scheme = COLOR_PALETTES[baseColor]?.[schemeType];
-  if (!scheme) return [];
-  
-  // Get the colors from the scheme
-  const schemeColors = scheme.colors;
-  
-  // Group wardrobe items by category
-  const categories = ['Tops', 'Bottoms', 'Outerwear', 'Shoes', 'Accessories'];
-  const itemsByCategory: Record<string, ClothingItem[]> = {};
-  
-  categories.forEach(category => {
-    itemsByCategory[category] = wardrobe.filter(item => item.category === category);
-  });
-  
-  // Find matching items for each color in the scheme
-  const matchingSets: ClothingItem[][] = [];
-  
-  // Find one combination
-  const matchingSet: ClothingItem[] = [];
-  
-  // First, find a base item that matches the baseColor
-  const possibleBaseItems = wardrobe.filter(item => 
-    isColorSimilar(item.color, baseColor) && 
-    (item.category === 'Tops' || item.category === 'Bottoms')
-  );
-  
-  if (possibleBaseItems.length > 0) {
-    // Add a base item
-    const baseItem = possibleBaseItems[Math.floor(Math.random() * possibleBaseItems.length)];
-    matchingSet.push(baseItem);
-    
-    // Find complementary items for each category we don't have yet
-    const usedCategories = new Set([baseItem.category]);
-    
-    // Try to find items for other categories that match our color scheme
-    for (const category of categories) {
-      if (!usedCategories.has(category) && itemsByCategory[category]?.length > 0) {
-        // Skip if we already have an item from this category
-        if (matchingSet.some(item => item.category === category)) continue;
-        
-        // For complementary items, prioritize items with colors from our scheme
-        let potentialItems = itemsByCategory[category].filter(item => 
-          schemeColors.some((schemeColor, index) => 
-            index > 0 && isColorSimilar(item.color, schemeColor)
-          )
-        );
-        
-        // If no matching items found, try neutral colors
-        if (potentialItems.length === 0) {
-          potentialItems = itemsByCategory[category].filter(item => 
-            isColorSimilar(item.color, 'Black') || 
-            isColorSimilar(item.color, 'White') || 
-            isColorSimilar(item.color, 'Gray')
-          );
-        }
-        
-        // If still no matches, just use any item from this category
-        if (potentialItems.length === 0) {
-          potentialItems = itemsByCategory[category];
-        }
-        
-        if (potentialItems.length > 0) {
-          const selectedItem = potentialItems[Math.floor(Math.random() * potentialItems.length)];
-          matchingSet.push(selectedItem);
-          usedCategories.add(category);
-        }
-      }
-    }
-    
-    if (matchingSet.length > 1) {
-      matchingSets.push(matchingSet);
-    }
-  }
-  
-  // Try to create more combinations if needed
-  if (matchingSets.length === 0 && wardrobe.length > 0) {
-    // If no good matches found, create a basic outfit
-    const tops = itemsByCategory['Tops'] || [];
-    const bottoms = itemsByCategory['Bottoms'] || [];
-    
-    if (tops.length > 0 && bottoms.length > 0) {
-      const randomTop = tops[Math.floor(Math.random() * tops.length)];
-      const randomBottom = bottoms[Math.floor(Math.random() * bottoms.length)];
-      
-      matchingSets.push([randomTop, randomBottom]);
-    }
-  }
-  
-  return matchingSets;
-};
-
-const ColorMatchingAssistant = ({ userWardrobe = [] }: ColorMatchingAssistantProps) => {
+const ColorMatchingAssistant = () => {
   const [baseColor, setBaseColor] = useState<string>("Blue");
   const [schemeType, setSchemeType] = useState<SchemeType>("complementary");
   const [currentScheme, setCurrentScheme] = useState<ColorScheme | null>(null);
-  const [activeTab, setActiveTab] = useState("theory");
-  const [matchingOutfits, setMatchingOutfits] = useState<ClothingItem[][]>([]);
   
   // Set initial color scheme
-  useEffect(() => {
+  useState(() => {
     if (COLOR_PALETTES[baseColor] && COLOR_PALETTES[baseColor][schemeType]) {
       setCurrentScheme(COLOR_PALETTES[baseColor][schemeType]);
     }
-  }, []);
+  });
   
   const generateColorScheme = () => {
     if (COLOR_PALETTES[baseColor] && COLOR_PALETTES[baseColor][schemeType]) {
       setCurrentScheme(COLOR_PALETTES[baseColor][schemeType]);
-      
-      // Find matching wardrobe items if we're on the wardrobe tab
-      if (activeTab === "wardrobe" && userWardrobe.length > 0) {
-        const matches = findMatchingItems(baseColor, schemeType, userWardrobe);
-        setMatchingOutfits(matches);
-      }
     }
   };
 
@@ -304,21 +147,9 @@ const ColorMatchingAssistant = ({ userWardrobe = [] }: ColorMatchingAssistantPro
     
     if (COLOR_PALETTES[value][schemeType]) {
       setCurrentScheme(COLOR_PALETTES[value][schemeType]);
-      
-      // Update matching outfits when color changes
-      if (activeTab === "wardrobe" && userWardrobe.length > 0) {
-        const matches = findMatchingItems(value, schemeType as SchemeType, userWardrobe);
-        setMatchingOutfits(matches);
-      }
     } else if (availableSchemes.length > 0) {
       setSchemeType(availableSchemes[0] as SchemeType);
       setCurrentScheme(COLOR_PALETTES[value][availableSchemes[0]]);
-      
-      // Update matching outfits when color changes
-      if (activeTab === "wardrobe" && userWardrobe.length > 0) {
-        const matches = findMatchingItems(value, availableSchemes[0] as SchemeType, userWardrobe);
-        setMatchingOutfits(matches);
-      }
     }
   };
   
@@ -326,29 +157,6 @@ const ColorMatchingAssistant = ({ userWardrobe = [] }: ColorMatchingAssistantPro
     setSchemeType(value);
     if (COLOR_PALETTES[baseColor][value]) {
       setCurrentScheme(COLOR_PALETTES[baseColor][value]);
-      
-      // Update matching outfits when scheme changes
-      if (activeTab === "wardrobe" && userWardrobe.length > 0) {
-        const matches = findMatchingItems(baseColor, value, userWardrobe);
-        setMatchingOutfits(matches);
-      }
-    }
-  };
-  
-  const handleTabChange = (value: string) => {
-    setActiveTab(value);
-    
-    // If switching to wardrobe tab, generate matching outfits
-    if (value === "wardrobe" && userWardrobe.length > 0) {
-      const matches = findMatchingItems(baseColor, schemeType, userWardrobe);
-      setMatchingOutfits(matches);
-    }
-  };
-  
-  const findMoreOutfits = () => {
-    if (userWardrobe.length > 0) {
-      const matches = findMatchingItems(baseColor, schemeType, userWardrobe);
-      setMatchingOutfits(matches);
     }
   };
 
@@ -370,259 +178,134 @@ const ColorMatchingAssistant = ({ userWardrobe = [] }: ColorMatchingAssistantPro
               <h4 className="font-medium">About Color Matching</h4>
               <p className="text-sm text-gray-600">
                 This assistant helps you find color combinations that work well together using color theory principles.
-                Select a base color and a color scheme type to generate matching suggestions, or view matching items from your wardrobe.
+                Select a base color and a color scheme type to generate matching suggestions.
               </p>
             </div>
           </PopoverContent>
         </Popover>
       </div>
       
-      <Tabs defaultValue="theory" onValueChange={handleTabChange}>
-        <TabsList className="mb-4">
-          <TabsTrigger value="theory" className="flex items-center gap-1">
-            <Palette size={16} />
-            Color Theory
-          </TabsTrigger>
-          <TabsTrigger value="wardrobe" className="flex items-center gap-1">
-            <Shirt size={16} />
-            Wardrobe Matches
-          </TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="theory">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="base-color">Base Color</Label>
-                <Select 
-                  value={baseColor} 
-                  onValueChange={handleBaseColorChange}
-                >
-                  <SelectTrigger id="base-color" className="w-full">
-                    <SelectValue placeholder="Select a color" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {colorOptions.map(color => (
-                      <SelectItem key={color} value={color}>
-                        <div className="flex items-center gap-2">
-                          <div 
-                            className="w-4 h-4 rounded-full" 
-                            style={{ 
-                              backgroundColor: color.toLowerCase() === "navy" 
-                                ? "#000080" 
-                                : color.toLowerCase() === "beige"
-                                ? "#F5F5DC"
-                                : color.toLowerCase() === "brown"
-                                ? "#964B00"
-                                : color.toLowerCase()
-                            }} 
-                          />
-                          {color}
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div>
-                <Label htmlFor="scheme-type">Color Scheme</Label>
-                <Select 
-                  value={schemeType} 
-                  onValueChange={(value: SchemeType) => handleSchemeTypeChange(value)}
-                >
-                  <SelectTrigger id="scheme-type" className="w-full">
-                    <SelectValue placeholder="Select a scheme type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {schemeTypeOptions
-                      .filter(option => 
-                        COLOR_PALETTES[baseColor] && 
-                        COLOR_PALETTES[baseColor][option.value]
-                      )
-                      .map(option => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))
-                    }
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <Button 
-                onClick={generateColorScheme} 
-                className="w-full"
-              >
-                <RefreshCw size={16} className="mr-2" />
-                Generate Color Scheme
-              </Button>
-            </div>
-            
-            <div className="space-y-4">
-              {currentScheme && (
-                <>
-                  <div>
-                    <p className="text-sm font-medium mb-2">{currentScheme.name} Color Scheme</p>
-                    <p className="text-sm text-gray-600 mb-3">{currentScheme.description}</p>
-                    <div className="flex gap-2">
-                      {currentScheme.colors.map((color, index) => (
-                        <div key={index} className="flex flex-col items-center">
-                          <div 
-                            className="w-12 h-12 rounded-md border border-gray-200" 
-                            style={{ backgroundColor: color }}
-                          />
-                          <span className="text-xs mt-1">{color}</span>
-                        </div>
-                      ))}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="base-color">Base Color</Label>
+            <Select 
+              value={baseColor} 
+              onValueChange={handleBaseColorChange}
+            >
+              <SelectTrigger id="base-color" className="w-full">
+                <SelectValue placeholder="Select a color" />
+              </SelectTrigger>
+              <SelectContent>
+                {colorOptions.map(color => (
+                  <SelectItem key={color} value={color}>
+                    <div className="flex items-center gap-2">
+                      <div 
+                        className="w-4 h-4 rounded-full" 
+                        style={{ 
+                          backgroundColor: color.toLowerCase() === "navy" 
+                            ? "#000080" 
+                            : color.toLowerCase() === "beige"
+                            ? "#F5F5DC"
+                            : color.toLowerCase() === "brown"
+                            ? "#964B00"
+                            : color.toLowerCase()
+                        }} 
+                      />
+                      {color}
                     </div>
-                  </div>
-                  
-                  <div className="p-3 bg-gray-50 rounded-md border border-gray-100 mt-4">
-                    <h4 className="text-sm font-medium mb-2">Outfit Suggestions</h4>
-                    <p className="text-xs text-gray-600">
-                      {CLOTHING_SUGGESTIONS[schemeType]}
-                    </p>
-                    <div className="mt-3 text-xs text-gray-700">
-                      <div className="flex items-start gap-2 mb-1">
-                        <Check size={14} className="text-green-500 mt-0.5" />
-                        <span>Use {schemeType === 'neutral' ? 'your base color' : 'the dominant color'} for main pieces like shirts, pants, or dresses</span>
-                      </div>
-                      <div className="flex items-start gap-2 mb-1">
-                        <Check size={14} className="text-green-500 mt-0.5" />
-                        <span>Add {schemeType === 'neutral' ? 'neutral tones' : 'complementary colors'} with accessories (scarves, jewelry, bags)</span>
-                      </div>
-                      <div className="flex items-start gap-2">
-                        <Check size={14} className="text-green-500 mt-0.5" />
-                        <span>For a bold statement, try a color-blocked outfit using these colors</span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex justify-end">
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="text-xs"
-                      onClick={() => setActiveTab("wardrobe")}
-                    >
-                      View matching items in your wardrobe
-                      <ArrowRight size={14} className="ml-1" />
-                    </Button>
-                  </div>
-                </>
-              )}
-            </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-        </TabsContent>
+          
+          <div>
+            <Label htmlFor="scheme-type">Color Scheme</Label>
+            <Select 
+              value={schemeType} 
+              onValueChange={(value: SchemeType) => handleSchemeTypeChange(value)}
+            >
+              <SelectTrigger id="scheme-type" className="w-full">
+                <SelectValue placeholder="Select a scheme type" />
+              </SelectTrigger>
+              <SelectContent>
+                {schemeTypeOptions
+                  .filter(option => 
+                    COLOR_PALETTES[baseColor] && 
+                    COLOR_PALETTES[baseColor][option.value]
+                  )
+                  .map(option => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))
+                }
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <Button 
+            onClick={generateColorScheme} 
+            className="w-full"
+          >
+            <RefreshCw size={16} className="mr-2" />
+            Generate Color Scheme
+          </Button>
+        </div>
         
-        <TabsContent value="wardrobe">
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="base-color-wardrobe">Base Color</Label>
-                  <Select 
-                    value={baseColor} 
-                    onValueChange={handleBaseColorChange}
-                  >
-                    <SelectTrigger id="base-color-wardrobe" className="w-full">
-                      <SelectValue placeholder="Select a color" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {colorOptions.map(color => (
-                        <SelectItem key={color} value={color}>
-                          <div className="flex items-center gap-2">
-                            <div 
-                              className="w-4 h-4 rounded-full" 
-                              style={{ 
-                                backgroundColor: color.toLowerCase() === "navy" 
-                                  ? "#000080" 
-                                  : color.toLowerCase() === "beige"
-                                  ? "#F5F5DC"
-                                  : color.toLowerCase() === "brown"
-                                  ? "#964B00"
-                                  : color.toLowerCase()
-                              }} 
-                            />
-                            {color}
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div>
-                  <Label htmlFor="scheme-type-wardrobe">Color Scheme</Label>
-                  <Select 
-                    value={schemeType} 
-                    onValueChange={(value: SchemeType) => handleSchemeTypeChange(value)}
-                  >
-                    <SelectTrigger id="scheme-type-wardrobe" className="w-full">
-                      <SelectValue placeholder="Select a scheme type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {schemeTypeOptions
-                        .filter(option => 
-                          COLOR_PALETTES[baseColor] && 
-                          COLOR_PALETTES[baseColor][option.value]
-                        )
-                        .map(option => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))
-                      }
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="flex space-x-2">
-                  <Button 
-                    onClick={findMoreOutfits} 
-                    className="flex-1"
-                  >
-                    <Search size={16} className="mr-2" />
-                    Find Matching Outfits
-                  </Button>
-                </div>
-                
-                {matchingOutfits.length === 0 && userWardrobe.length > 0 && (
-                  <div className="p-4 bg-gray-50 rounded-md border border-gray-200 text-center">
-                    <div className="flex justify-center mb-2">
-                      <Target size={20} className="text-gray-400" />
+        <div className="space-y-4">
+          {currentScheme && (
+            <>
+              <div>
+                <p className="text-sm font-medium mb-2">{currentScheme.name} Color Scheme</p>
+                <p className="text-sm text-gray-600 mb-3">{currentScheme.description}</p>
+                <div className="flex gap-2">
+                  {currentScheme.colors.map((color, index) => (
+                    <div key={index} className="flex flex-col items-center">
+                      <div 
+                        className="w-12 h-12 rounded-md border border-gray-200" 
+                        style={{ backgroundColor: color }}
+                      />
+                      <span className="text-xs mt-1">{color}</span>
                     </div>
-                    <p className="text-sm text-gray-600">
-                      No matching outfits found for this color scheme. Try a different color or scheme type.
-                    </p>
-                  </div>
-                )}
-                
-                {userWardrobe.length === 0 && (
-                  <div className="p-4 bg-gray-50 rounded-md border border-gray-200 text-center">
-                    <div className="flex justify-center mb-2">
-                      <Shirt size={20} className="text-gray-400" />
-                    </div>
-                    <p className="text-sm text-gray-600">
-                      Your wardrobe is empty. Add some clothing items first to get outfit recommendations.
-                    </p>
-                  </div>
-                )}
+                  ))}
+                </div>
               </div>
               
-              <div>
-                {matchingOutfits.length > 0 && (
-                  <div className="space-y-4">
-                    <div>
-                      <h4 className="text-sm font-medium mb-3">
-                        Suggested Outfit from Your Wardrobe
-                      </h4>
-                      
-                      <div className="grid grid-cols-2 gap-2">
-                        {matchingOutfits[0].map(item => (
-                          <div key={item.id} className="relative">
-                            <img 
-                              src={item.imageUrl} 
-                              alt={item.name}
-                              className="w-full
+              <div className="p-3 bg-gray-50 rounded-md border border-gray-100 mt-4">
+                <h4 className="text-sm font-medium mb-2">Outfit Suggestions</h4>
+                <p className="text-xs text-gray-600">
+                  {CLOTHING_SUGGESTIONS[schemeType]}
+                </p>
+                <div className="mt-3 text-xs text-gray-700">
+                  <div className="flex items-start gap-2 mb-1">
+                    <Check size={14} className="text-green-500 mt-0.5" />
+                    <span>Use {schemeType === 'neutral' ? 'your base color' : 'the dominant color'} for main pieces like shirts, pants, or dresses</span>
+                  </div>
+                  <div className="flex items-start gap-2 mb-1">
+                    <Check size={14} className="text-green-500 mt-0.5" />
+                    <span>Add {schemeType === 'neutral' ? 'neutral tones' : 'complementary colors'} with accessories (scarves, jewelry, bags)</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <Check size={14} className="text-green-500 mt-0.5" />
+                    <span>For a bold statement, try a color-blocked outfit using these colors</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex justify-end">
+                <Button variant="ghost" size="sm" className="text-xs">
+                  View matching items in your wardrobe
+                  <ArrowRight size={14} className="ml-1" />
+                </Button>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default ColorMatchingAssistant;
