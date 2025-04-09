@@ -2,14 +2,16 @@
 import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import ClothingGrid from '@/components/ClothingGrid';
+import ColorMatchingAssistant from '@/components/ColorMatchingAssistant';
 import { useAuth } from '@/hooks/useAuth';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
-import { Shirt, Footprints, Layers, Filter, ShoppingBag } from "lucide-react";
+import { Shirt, Footprints, Layers, Filter, ShoppingBag, Palette } from "lucide-react";
 
 const Wardrobe = () => {
   const { user } = useAuth();
   const [activeCategory, setActiveCategory] = useState<string>("all");
+  const [showColorAssistant, setShowColorAssistant] = useState(false);
   const [categories, setCategories] = useState<string[]>([]);
   
   // Predefined main categories
@@ -51,7 +53,22 @@ const Wardrobe = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-6">My Wardrobe</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">My Wardrobe</h1>
+        <button 
+          onClick={() => setShowColorAssistant(!showColorAssistant)}
+          className="flex items-center gap-2 text-sm font-medium bg-purple-100 text-purple-800 px-3 py-1.5 rounded-md hover:bg-purple-200 transition-colors"
+        >
+          <Palette size={16} />
+          {showColorAssistant ? 'Hide Color Assistant' : 'Color Matching Assistant'}
+        </button>
+      </div>
+      
+      {showColorAssistant && (
+        <div className="mb-6">
+          <ColorMatchingAssistant />
+        </div>
+      )}
       
       <div className="mb-6">
         <Tabs defaultValue="all" onValueChange={setActiveCategory}>

@@ -1,13 +1,17 @@
+
 import { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import ClothingItem from './ClothingItem';
-import { Search, Filter, PlusCircle, Upload, X, Shirt } from 'lucide-react';
+import { Search, Filter, PlusCircle, Upload, X, Shirt, Check } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { sampleMensClothingItems } from '@/utils/sampleClothingItems';
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 
 interface ClothingItemType {
   id: string;
@@ -35,6 +39,15 @@ const ClothingGrid = ({ categoryFilter }: ClothingGridProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [addingItems, setAddingItems] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [filterMenuOpen, setFilterMenuOpen] = useState(false);
+  const [activeFilters, setActiveFilters] = useState({
+    colors: [] as string[],
+    occasions: [] as string[]
+  });
+  const [availableColors, setAvailableColors] = useState<string[]>([]);
+  const [availableOccasions, setAvailableOccasions] = useState<string[]>([]);
+
+  const activeFilterCount = activeFilters.colors.length + activeFilters.occasions.length;
   
   useEffect(() => {
     const fetchClothingItems = async () => {
@@ -68,6 +81,13 @@ const ClothingGrid = ({ categoryFilter }: ClothingGridProps) => {
         }));
         
         setItems(formattedItems);
+        
+        // Extract unique colors and occasions for filters
+        const colors = [...new Set(formattedItems.map(item => item.color))].filter(Boolean);
+        setAvailableColors(colors);
+        
+        const occasions = [...new Set(formattedItems.flatMap(item => item.occasion || []))].filter(Boolean);
+        setAvailableOccasions(occasions);
       } catch (error: any) {
         console.error('Error fetching clothing items:', error);
         toast.error('Failed to load your wardrobe');
@@ -176,6 +196,18 @@ const ClothingGrid = ({ categoryFilter }: ClothingGridProps) => {
         
         setItems(prevItems => [...prevItems, newItem]);
         toast.success('New clothing item added to wardrobe');
+        
+        // Update available colors and occasions
+        if (newItem.color && !availableColors.includes(newItem.color)) {
+          setAvailableColors(prev => [...prev, newItem.color]);
+        }
+        
+        if (newItem.occasion) {
+          const newOccasions = newItem.occasion.filter(o => !availableOccasions.includes(o));
+          if (newOccasions.length > 0) {
+            setAvailableOccasions(prev => [...prev, ...newOccasions]);
+          }
+        }
       }
       
       setNewItemName('');
@@ -243,6 +275,14 @@ const ClothingGrid = ({ categoryFilter }: ClothingGridProps) => {
       }
       
       toast.success(`Added ${addedCount} men's clothing items to your wardrobe`);
+      
+      // Update available filters
+      const colors = [...new Set(sampleMensClothingItems.map(item => item.color))].filter(Boolean);
+      setAvailableColors(prev => [...new Set([...prev, ...colors])]);
+      
+      const occasions = [...new Set(sampleMensClothingItems.flatMap(item => item.occasion || []))].filter(Boolean);
+      setAvailableOccasions(prev => [...new Set([...prev, ...occasions])]);
+      
     } catch (error: any) {
       console.error('Error adding sample items:', error);
       toast.error('Failed to add sample items to wardrobe');
@@ -251,11 +291,47 @@ const ClothingGrid = ({ categoryFilter }: ClothingGridProps) => {
     }
   };
   
-  const filteredItems = items.filter(item => 
-    item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.color.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const toggleColorFilter = (color: string) => {
+    setActiveFilters(prev => {
+      if (prev.colors.includes(color)) {
+        return { ...prev, colors: prev.colors.filter(c => c !== color) };
+      } else {
+        return { ...prev, colors: [...prev.colors, color] };
+      }
+    });
+  };
+  
+  const toggleOccasionFilter = (occasion: string) => {
+    setActiveFilters(prev => {
+      if (prev.occasions.includes(occasion)) {
+        return { ...prev, occasions: prev.occasions.filter(o => o !== occasion) };
+      } else {
+        return { ...prev, occasions: [...prev.occasions, occasion] };
+      }
+    });
+  };
+  
+  const clearFilters = () => {
+    setActiveFilters({ colors: [], occasions: [] });
+  };
+  
+  const filteredItems = items.filter(item => {
+    // Apply search filter
+    const matchesSearch = 
+      item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.color.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    // Apply color filters
+    const matchesColor = activeFilters.colors.length === 0 || 
+      activeFilters.colors.includes(item.color);
+    
+    // Apply occasion filters
+    const matchesOccasion = activeFilters.occasions.length === 0 || 
+      (item.occasion && item.occasion.some(o => activeFilters.occasions.includes(o)));
+    
+    return matchesSearch && matchesColor && matchesOccasion;
+  });
   
   const categoryOptions = [
     { value: 'Tops', label: 'Shirts' },
@@ -284,10 +360,88 @@ const ClothingGrid = ({ categoryFilter }: ClothingGridProps) => {
         </div>
         
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" className="gap-1">
-            <Filter size={16} />
-            Filter
-          </Button>
+          <Popover open={filterMenuOpen} onOpenChange={setFilterMenuOpen}>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-1 relative">
+                <Filter size={16} />
+                Filter
+                {activeFilterCount > 0 && (
+                  <Badge className="ml-1 h-5 w-5 p-0 flex items-center justify-center bg-blue-600" variant="default">
+                    {activeFilterCount}
+                  </Badge>
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-80 p-4" align="end">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-medium">Filters</h4>
+                  {activeFilterCount > 0 && (
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={clearFilters}
+                      className="h-7 text-xs"
+                    >
+                      Clear all
+                    </Button>
+                  )}
+                </div>
+                
+                {availableColors.length > 0 && (
+                  <div>
+                    <Label className="block mb-2">Colors</Label>
+                    <div className="flex flex-wrap gap-2">
+                      {availableColors.map(color => (
+                        <button
+                          key={color}
+                          onClick={() => toggleColorFilter(color)}
+                          className={`px-2 py-1 rounded-md text-xs flex items-center gap-1 ${
+                            activeFilters.colors.includes(color)
+                            ? 'bg-blue-100 text-blue-800'
+                            : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                          }`}
+                        >
+                          <div 
+                            className="w-3 h-3 rounded-full" 
+                            style={{ backgroundColor: color.toLowerCase() }}
+                          />
+                          {color}
+                          {activeFilters.colors.includes(color) && (
+                            <Check size={12} className="text-blue-600" />
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {availableOccasions.length > 0 && (
+                  <div>
+                    <Label className="block mb-2">Occasions</Label>
+                    <div className="flex flex-wrap gap-2">
+                      {availableOccasions.map(occasion => (
+                        <button
+                          key={occasion}
+                          onClick={() => toggleOccasionFilter(occasion)}
+                          className={`px-2 py-1 rounded-md text-xs ${
+                            activeFilters.occasions.includes(occasion)
+                            ? 'bg-blue-100 text-blue-800'
+                            : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                          }`}
+                        >
+                          {occasion}
+                          {activeFilters.occasions.includes(occasion) && (
+                            <Check size={12} className="ml-1 text-blue-600" />
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </PopoverContent>
+          </Popover>
           <Button size="sm" onClick={handleAddNew} className="gap-1">
             <PlusCircle size={16} />
             Add Item
@@ -303,6 +457,27 @@ const ClothingGrid = ({ categoryFilter }: ClothingGridProps) => {
           </Button>
         </div>
       </div>
+      
+      {activeFilterCount > 0 && (
+        <div className="flex flex-wrap gap-2 mb-4">
+          {activeFilters.colors.map(color => (
+            <Badge key={`color-${color}`} variant="secondary" className="gap-1">
+              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: color.toLowerCase() }} />
+              {color}
+              <X size={14} className="ml-1 cursor-pointer" onClick={() => toggleColorFilter(color)} />
+            </Badge>
+          ))}
+          {activeFilters.occasions.map(occasion => (
+            <Badge key={`occasion-${occasion}`} variant="secondary" className="gap-1">
+              {occasion}
+              <X size={14} className="ml-1 cursor-pointer" onClick={() => toggleOccasionFilter(occasion)} />
+            </Badge>
+          ))}
+          <Button variant="ghost" size="sm" onClick={clearFilters} className="h-6 text-xs px-2">
+            Clear all
+          </Button>
+        </div>
+      )}
       
       {isLoading ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
@@ -321,8 +496,8 @@ const ClothingGrid = ({ categoryFilter }: ClothingGridProps) => {
           </div>
           <h3 className="font-medium text-gray-900 mb-1">No items found</h3>
           <p className="text-gray-500 text-sm max-w-xs">
-            {searchQuery ? 
-              "We couldn't find any clothing items matching your search." : 
+            {searchQuery || activeFilterCount > 0 ? 
+              "We couldn't find any clothing items matching your filters." : 
               "Your wardrobe is empty. Start adding your clothes!"}
           </p>
         </div>
